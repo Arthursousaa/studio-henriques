@@ -10,4 +10,4 @@
 - [x] Cobrir fluxos essenciais com testes e verificar a interface em desktop e celular.
 - [ ] Confirmar que a conta que Jaqueline usará para entrar no painel seja a conta proprietária configurada como administradora.
 - [x] Ampliar os testes automatizados para os fluxos de sucesso de serviços, solicitações, preços e status de agendamento.
-- [ ] Criar e exportar a versão final do projeto para um repositório GitHub conectado pela proprietária.
+- [x] Criar e exportar a versão final do projeto para um repositório GitHub conectado pela proprietária.
