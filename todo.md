@@ -39,4 +39,4 @@
 - [x] Criar uma versão estática para GitHub Pages com apresentação, catálogo filtrável, preços e contatos do Studio Henriques.
 - [x] Adaptar o pedido de informações da versão estática para abrir o WhatsApp com o serviço selecionado, sem envio automático.
 - [x] Documentar quais funções administrativas não estarão disponíveis na versão estática e como atualizar serviços e preços no código.
-- [ ] Configurar o repositório para publicar a versão estática gratuitamente no GitHub Pages.
+- [x] Configurar o repositório para publicar a versão estática gratuitamente no GitHub Pages.
