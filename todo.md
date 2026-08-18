@@ -33,3 +33,6 @@
 - [x] Validar que a seleção de um serviço filtrado mantém o serviço pré-selecionado no pedido de informações.
 - [x] Adicionar teste de integração confirmando que, ao clicar em um serviço filtrado, o formulário recebe esse serviço pré-selecionado.
 - [x] Adicionar teste de interface da Home que selecione uma categoria, clique em um cartão filtrado e confira o serviço no formulário exibido.
+- [ ] Personalizar o endereço público do site com o nome escolhido pela proprietária ou conectar um domínio próprio.
+- [ ] Conectar e validar o domínio escolhido studiohenriques.com.br após compra ou disponibilidade da proprietária.
+- [x] Comparar hospedagens gratuitas que possam suportar uma futura migração do site completo com servidor, banco de dados e painel administrativo.
