@@ -99,7 +99,7 @@ export default function Home() {
     }
 
     const message = [
-      "Olá, Jaqueline! Gostaria de solicitar um agendamento no Studio Henriques.",
+      "Olá, Studio Henriques! Gostaria de solicitar um agendamento.",
       "",
       `Serviço: ${selectedService.name}`,
       `Data desejada: ${new Intl.DateTimeFormat("pt-BR").format(scheduledAt)}`,
@@ -146,7 +146,6 @@ export default function Home() {
             <a className="transition-colors hover:text-[#9d6156]" href="#servicos">Serviços</a>
             <a className="transition-colors hover:text-[#9d6156]" href="#sobre">O studio</a>
             <a className="transition-colors hover:text-[#9d6156]" href="#agendar">Agendar</a>
-            <a className="rounded-full border border-[#5b3b35]/20 px-4 py-2 transition-colors hover:bg-[#f0e1d8]" href="/admin">Área da Jaqueline</a>
           </nav>
 
           <button
@@ -163,7 +162,6 @@ export default function Home() {
               <a onClick={() => setMenuOpen(false)} href="#servicos">Serviços</a>
               <a onClick={() => setMenuOpen(false)} href="#sobre">O studio</a>
               <button className="text-left" onClick={scrollToBooking}>Agendar</button>
-              <a href="/admin">Área da Jaqueline</a>
             </div>
           </nav>
         )}
@@ -186,7 +184,7 @@ export default function Home() {
                 Beleza que acompanha o seu ritmo.
               </h1>
               <p className="mt-7 max-w-lg text-base leading-7 text-[#fffaf2]/82 sm:text-lg">
-                No Studio Henriques, Jaqueline une atenção aos detalhes e cuidado individual em cada atendimento de beleza e bem-estar.
+                Um espaço pensado para você reservar um tempo, cuidar de si e sair ainda mais confiante.
               </p>
               <div className="mt-9 flex flex-wrap items-center gap-3">
                 <Button onClick={scrollToBooking} className="h-12 rounded-full bg-[#f9e8dd] px-6 text-sm font-semibold text-[#4e302a] shadow-lg transition-transform hover:bg-white active:scale-[0.97]">
@@ -215,7 +213,7 @@ export default function Home() {
               <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Cuidado pensado para você.</h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-[#705e56] lg:pb-1">
-              Escolha o serviço que mais combina com o seu momento. Os valores são atualizados diretamente pela Jaqueline no painel do studio.
+              Escolha o cuidado que mais combina com o seu momento. Consulte os valores, selecione o serviço desejado e faça sua solicitação de horário.
             </p>
           </div>
 
@@ -258,7 +256,7 @@ export default function Home() {
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#edc3b1]">Studio Henriques</p>
               <h2 className="font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Cuidado com intenção, do seu jeito.</h2>
               <p className="mt-7 max-w-lg text-base leading-7 text-[#fffaf2]/75">
-                Cada serviço é um convite para se sentir bem. Jaqueline Henriques oferece um atendimento próximo, acolhedor e atento ao que faz sentido para você.
+                Cada serviço é um convite para se sentir bem. Aqui, o atendimento é acolhedor, cuidadoso e pensado para o seu momento.
               </p>
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 <div className="border-t border-white/20 pt-4"><span className="text-xs uppercase tracking-[0.15em] text-[#edc3b1]">Atendimento</span><p className="mt-1 text-sm leading-6 text-[#fffaf2]/82">Com atenção aos detalhes e à sua preferência.</p></div>
@@ -275,7 +273,7 @@ export default function Home() {
               <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#a4675d]">Agendamento</p>
               <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Vamos encontrar o melhor horário?</h2>
               <p className="mt-6 max-w-md text-base leading-7 text-[#705e56]">
-                Preencha seus dados e o WhatsApp da Jaqueline será aberto com a sua solicitação já preparada. Você revisa a mensagem e decide se quer enviar.
+                Preencha seus dados e o WhatsApp do Studio será aberto com a sua solicitação já preparada. Você revisa a mensagem e decide se quer enviar.
               </p>
               <div className="mt-8 rounded-2xl border border-[#d7b9aa] bg-[#fffaf2] p-5 text-sm leading-6 text-[#6c5048]">
                 <div className="mb-2 flex items-center gap-2 font-semibold text-[#5b3b35]"><MessageCircle className="h-4 w-4" /> Envio sob seu controle</div>
@@ -310,7 +308,7 @@ export default function Home() {
                 </div>
                 <div className="sm:col-span-2">
                   <Label htmlFor="notes" className="text-sm font-semibold">Observações <span className="font-normal text-[#705e56]">(opcional)</span></Label>
-                  <Textarea id="notes" value={form.notes} onChange={event => updateForm("notes", event.target.value)} maxLength={600} placeholder="Conte algo que a Jaqueline deve saber antes do atendimento." className="mt-2 min-h-24 resize-y rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
+                  <Textarea id="notes" value={form.notes} onChange={event => updateForm("notes", event.target.value)} maxLength={600} placeholder="Conte algo importante para o seu atendimento." className="mt-2 min-h-24 resize-y rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
                 </div>
               </div>
               <Button type="submit" disabled={createBooking.isPending || servicesQuery.isLoading} className="mt-7 h-12 w-full rounded-full bg-[#5b3b35] text-sm font-semibold text-[#fffaf2] hover:bg-[#754d45] active:scale-[0.98]">
@@ -324,8 +322,8 @@ export default function Home() {
 
       <footer className="border-t border-[#342923]/10 bg-[#f5ede5]">
         <div className="container flex flex-col justify-between gap-5 py-8 text-sm text-[#705e56] sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-[#5b3b35] font-serif text-xs text-white">SH</span><span>Studio Henriques · Jaqueline Henriques</span></div>
-          <div className="flex items-center gap-4"><a className="font-semibold text-[#5b3b35] hover:text-[#a4675d]" href="/admin">Painel administrativo</a><button onClick={scrollToBooking} className="font-semibold text-[#5b3b35] hover:text-[#a4675d]">Agendar</button></div>
+          <div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-[#5b3b35] font-serif text-xs text-white">SH</span><span>Studio Henriques · Beleza &amp; bem-estar</span></div>
+          <div className="flex items-center gap-4"><button onClick={scrollToBooking} className="font-semibold text-[#5b3b35] hover:text-[#a4675d]">Agendar</button></div>
         </div>
       </footer>
     </div>

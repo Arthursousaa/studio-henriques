@@ -15,3 +15,5 @@
 - [x] Validar a promoção de acesso para a proprietária e o bloqueio de outras administradoras nos testes automatizados.
 - [x] Exibir a ação de promoção de administradora apenas para a conta proprietária do projeto.
 - [x] Confirmar que a conta proprietária atual permanece como administradora junto da conta da Jaqueline.
+- [x] Revisar toda a linguagem do site público para falar diretamente com as clientes e remover referências ao painel e à administração.
+- [x] Remover os links de acesso interno da navegação e do rodapé públicos para manter a experiência exclusivamente voltada às clientes.
