@@ -8,10 +8,13 @@ import {
   getStudioService,
   listStudioBookings,
   listStudioServices,
+  listStudioUsers,
   updateStudioBookingStatus,
   updateStudioService,
+  updateStudioUserRole,
 } from "./db";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
+import { ENV } from "./_core/env";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -57,6 +60,9 @@ export const appRouter = router({
       }),
   }),
   admin: router({
+    access: adminProcedure.query(({ ctx }) => ({
+      isProjectOwner: ctx.user.openId === ENV.ownerOpenId,
+    })),
     services: adminProcedure.query(() => listStudioServices(true)),
     updateService: adminProcedure
       .input(
@@ -83,6 +89,25 @@ export const appRouter = router({
       )
       .mutation(async ({ input }) => {
         await updateStudioBookingStatus(input.id, input.status);
+        return { success: true } as const;
+      }),
+    users: adminProcedure.query(() => listStudioUsers()),
+    updateUserRole: adminProcedure
+      .input(z.object({ id: z.number().int().positive(), role: z.enum(["admin", "user"]) }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.openId !== ENV.ownerOpenId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Somente a proprietária do projeto pode administrar acessos.",
+          });
+        }
+        if (ctx.user.id === input.id && input.role !== "admin") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "A proprietária não pode remover o próprio acesso de administradora.",
+          });
+        }
+        await updateStudioUserRole(input.id, input.role);
         return { success: true } as const;
       }),
   }),

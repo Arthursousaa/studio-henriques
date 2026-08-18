@@ -234,3 +234,24 @@ export async function updateStudioBookingStatus(
   if (!db) throw new Error("Banco de dados indisponível");
   await db.update(studioBookings).set({ status }).where(eq(studioBookings.id, id));
 }
+
+export async function listStudioUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      lastSignedIn: users.lastSignedIn,
+    })
+    .from(users)
+    .orderBy(desc(users.lastSignedIn));
+}
+
+export async function updateStudioUserRole(id: number, role: "admin" | "user") {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível");
+  await db.update(users).set({ role }).where(eq(users.id, id));
+}

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const dbMocks = vi.hoisted(() => ({
   listStudioServices: vi.fn(),
@@ -7,12 +7,15 @@ const dbMocks = vi.hoisted(() => ({
   updateStudioService: vi.fn(),
   listStudioBookings: vi.fn(),
   updateStudioBookingStatus: vi.fn(),
+  listStudioUsers: vi.fn(),
+  updateStudioUserRole: vi.fn(),
 }));
 
 vi.mock("./db", () => dbMocks);
 
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import { ENV } from "./_core/env";
 
 function createContext(role: "admin" | "user" | null): TrpcContext {
   return {
@@ -48,6 +51,12 @@ const activeService = {
 };
 
 describe("Studio Henriques core flows", () => {
+  const originalOwnerOpenId = ENV.ownerOpenId;
+
+  afterEach(() => {
+    ENV.ownerOpenId = originalOwnerOpenId;
+    vi.clearAllMocks();
+  });
   it("lists only public services for the website", async () => {
     dbMocks.listStudioServices.mockResolvedValue([activeService]);
     const caller = appRouter.createCaller(createContext(null));
@@ -105,5 +114,30 @@ describe("Studio Henriques core flows", () => {
     ).resolves.toEqual({ success: true });
 
     expect(dbMocks.updateStudioBookingStatus).toHaveBeenCalledWith(8, "confirmed");
+  });
+
+  it("allows administrators to read the accounts eligible for panel access", async () => {
+    const accounts = [{ id: 1, name: "Jaqueline", email: "jaqueline@example.com", role: "user", lastSignedIn: new Date() }];
+    dbMocks.listStudioUsers.mockResolvedValue(accounts);
+    const caller = appRouter.createCaller(createContext("admin"));
+
+    await expect(caller.admin.users()).resolves.toEqual(accounts);
+  });
+
+  it("allows only the project owner to promote Jaqueline to administrator", async () => {
+    ENV.ownerOpenId = "owner-open-id";
+    dbMocks.updateStudioUserRole.mockResolvedValue(undefined);
+    const ownerContext = createContext("admin");
+    ownerContext.user!.openId = "owner-open-id";
+    const ownerCaller = appRouter.createCaller(ownerContext);
+
+    await expect(ownerCaller.admin.updateUserRole({ id: 25, role: "admin" })).resolves.toEqual({ success: true });
+    expect(dbMocks.updateStudioUserRole).toHaveBeenCalledWith(25, "admin");
+
+    const anotherAdmin = appRouter.createCaller(createContext("admin"));
+    await expect(anotherAdmin.admin.updateUserRole({ id: 25, role: "admin" })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Somente a proprietária do projeto pode administrar acessos.",
+    });
   });
 });

@@ -13,6 +13,8 @@ import {
   LockKeyhole,
   Save,
   Settings2,
+  ShieldCheck,
+  UserRoundPlus,
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -58,8 +60,10 @@ function AdminContent() {
   const utils = trpc.useUtils();
   const [draftPrices, setDraftPrices] = useState<Record<number, string>>({});
   const isAdmin = user?.role === "admin";
+  const accessQuery = trpc.admin.access.useQuery(undefined, { enabled: isAdmin });
   const servicesQuery = trpc.admin.services.useQuery(undefined, { enabled: isAdmin });
   const bookingsQuery = trpc.admin.bookings.useQuery(undefined, { enabled: isAdmin });
+  const usersQuery = trpc.admin.users.useQuery(undefined, { enabled: isAdmin });
   const updateService = trpc.admin.updateService.useMutation({
     onSuccess: () => {
       toast.success("Serviço atualizado.");
@@ -74,6 +78,13 @@ function AdminContent() {
       utils.admin.bookings.invalidate();
     },
     onError: error => toast.error(error.message || "Não foi possível atualizar o agendamento."),
+  });
+  const updateUserRole = trpc.admin.updateUserRole.useMutation({
+    onSuccess: () => {
+      toast.success("Acesso administrativo atualizado.");
+      utils.admin.users.invalidate();
+    },
+    onError: error => toast.error(error.message || "Não foi possível atualizar o acesso."),
   });
 
   useEffect(() => {
@@ -147,6 +158,22 @@ function AdminContent() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      <section className="rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-5 shadow-[0_20px_50px_-42px_rgba(60,37,30,0.48)] sm:p-7">
+        <div className="flex flex-col justify-between gap-3 border-b border-[#342923]/10 pb-5 sm:flex-row sm:items-center">
+          <div><div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Acesso ao painel</h2></div><p className="mt-1 max-w-2xl text-sm leading-6 text-[#705e56]">Depois que Jaqueline entrar uma vez pelo botão “Área da Jaqueline”, a conta dela aparecerá aqui. A proprietária pode promovê-la a administradora.</p></div>
+          <Badge className="w-fit rounded-full bg-[#f3e4da] px-3 py-1 text-[#7e4c43] hover:bg-[#f3e4da]">Somente a proprietária altera acessos</Badge>
+        </div>
+        <div className="mt-2 divide-y divide-[#342923]/10">
+          {usersQuery.isLoading && <p className="py-8 text-sm text-[#705e56]">Carregando contas...</p>}
+          {usersQuery.data?.map(account => (
+            <div key={account.id} className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+              <div><p className="font-semibold text-[#342923]">{account.name || "Sem nome"}</p><p className="mt-1 text-sm text-[#705e56]">{account.email || "E-mail não informado"}</p></div>
+              <div className="flex items-center gap-3"><Badge className={`rounded-full px-3 py-1 ${account.role === "admin" ? "bg-[#dcecdf] text-[#32633c]" : "bg-[#f1ece7] text-[#705e56]"}`}>{account.role === "admin" ? "Administradora" : "Usuária"}</Badge>{accessQuery.data?.isProjectOwner && <Button size="sm" disabled={updateUserRole.isPending || account.role === "admin"} onClick={() => updateUserRole.mutate({ id: account.id, role: "admin" })} className="h-10 rounded-full bg-[#5b3b35] px-4 text-[#fffaf2] hover:bg-[#754d45]"><UserRoundPlus className="mr-1.5 h-3.5 w-3.5" />Tornar admin</Button>}</div>
+            </div>
+          ))}
         </div>
       </section>
 

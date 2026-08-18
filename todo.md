@@ -11,3 +11,6 @@
 - [ ] Confirmar que a conta que Jaqueline usará para entrar no painel seja a conta proprietária configurada como administradora.
 - [x] Ampliar os testes automatizados para os fluxos de sucesso de serviços, solicitações, preços e status de agendamento.
 - [x] Criar e exportar a versão final do projeto para um repositório GitHub conectado pela proprietária.
+- [x] Permitir que a administradora proprietária promova a conta da Jaqueline a administradora no painel após o primeiro login dela.
+- [x] Validar a promoção de acesso para a proprietária e o bloqueio de outras administradoras nos testes automatizados.
+- [x] Exibir a ação de promoção de administradora apenas para a conta proprietária do projeto.
