@@ -144,7 +144,7 @@ export default function Home() {
 
           <nav className="hidden items-center gap-7 text-sm font-medium md:flex" aria-label="Navegação principal">
             <a className="transition-colors hover:text-[#9d6156]" href="#servicos">Serviços</a>
-            <a className="transition-colors hover:text-[#9d6156]" href="#sobre">O studio</a>
+            <a className="transition-colors hover:text-[#9d6156]" href="#sobre">Sobre a Jaqueline</a>
             <a className="transition-colors hover:text-[#9d6156]" href="#agendar">Agendar</a>
           </nav>
 
@@ -160,7 +160,7 @@ export default function Home() {
           <nav className="border-t border-[#342923]/10 bg-[#fbf8f3] px-5 py-4 md:hidden" aria-label="Navegação móvel">
             <div className="mx-auto flex max-w-md flex-col gap-3 text-sm font-medium">
               <a onClick={() => setMenuOpen(false)} href="#servicos">Serviços</a>
-              <a onClick={() => setMenuOpen(false)} href="#sobre">O studio</a>
+              <a onClick={() => setMenuOpen(false)} href="#sobre">Sobre a Jaqueline</a>
               <button className="text-left" onClick={scrollToBooking}>Agendar</button>
             </div>
           </nav>
@@ -243,24 +243,31 @@ export default function Home() {
         </section>
 
         <section id="sobre" className="overflow-hidden bg-[#5b3b35] text-[#fffaf2]">
-          <div className="container grid gap-12 py-20 sm:py-28 lg:grid-cols-2 lg:gap-24">
-            <div className="relative min-h-72 overflow-hidden rounded-[1.75rem] border border-white/15 bg-[#9d6c60] p-8 sm:min-h-96">
-              <div className="absolute -right-12 -top-10 h-56 w-56 rounded-full border-[28px] border-[#d8a796]/45" />
-              <div className="absolute -bottom-16 left-12 h-44 w-44 rounded-full bg-[#f3d6c8]/20" />
-              <div className="relative flex h-full flex-col justify-end">
-                <span className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-[#fffaf2] text-[#5b3b35]"><Sparkles className="h-5 w-5" /></span>
-                <p className="max-w-xs font-serif text-3xl leading-[1.05] tracking-[-0.04em]">Uma pausa que deixa a rotina mais leve.</p>
+          <div className="container grid gap-12 py-20 sm:py-28 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
+            <div className="relative min-h-80 overflow-hidden rounded-[1.75rem] border border-white/15 bg-[#8fcfc7] p-8 text-[#2f3633] sm:min-h-[29rem] sm:p-10">
+              <div className="absolute -right-10 -top-10 h-56 w-56 rounded-full border-[24px] border-[#f6dc88]/80" />
+              <div className="absolute -bottom-12 -left-10 h-48 w-48 rounded-full border-[24px] border-white/20" />
+              <div className="relative flex h-full flex-col justify-between">
+                <span className="grid h-16 w-16 place-items-center rounded-full border border-[#2f3633]/20 bg-[#b9e2dc] font-serif text-xl tracking-[-0.05em]">JH</span>
+                <div>
+                  <div className="max-w-sm border border-[#2f3633]/40 px-4 py-3">
+                    <p className="font-serif text-lg leading-none tracking-[-0.04em]">Jaqueline Henriques</p>
+                    <p className="mt-2 text-[9px] font-bold uppercase tracking-[0.2em] text-[#2f3633]/65">Studio de estética e beleza</p>
+                  </div>
+                  <p className="mt-4 max-w-sm font-serif text-4xl leading-[1.02] tracking-[-0.05em]">Cuidar de você também é a minha paixão.</p>
+                </div>
               </div>
             </div>
             <div className="flex flex-col justify-center">
-              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#edc3b1]">Studio Henriques</p>
-              <h2 className="font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Cuidado com intenção, do seu jeito.</h2>
-              <p className="mt-7 max-w-lg text-base leading-7 text-[#fffaf2]/75">
-                Cada serviço é um convite para se sentir bem. Aqui, o atendimento é acolhedor, cuidadoso e pensado para o seu momento.
-              </p>
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#edc3b1]">Sobre a Jaqueline</p>
+              <h2 className="max-w-2xl font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Estética com escuta, propósito e cuidado.</h2>
+              <div className="mt-7 max-w-2xl space-y-4 text-base leading-7 text-[#fffaf2]/80">
+                <p>Meu nome é Jaqueline Henriques, tenho 27 anos e sou estudante de Estética, atualmente no 3º semestre. Sou apaixonada pelo poder que o autocuidado tem de transformar a autoestima.</p>
+                <p>Sou fundadora do Studio Henriques, um espaço criado com carinho para oferecer cuidados, bem-estar e momentos especiais. Para mim, a estética vai muito além da beleza: ela está ligada à confiança, ao cuidado com o corpo e ao amor-próprio.</p>
+              </div>
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                <div className="border-t border-white/20 pt-4"><span className="text-xs uppercase tracking-[0.15em] text-[#edc3b1]">Atendimento</span><p className="mt-1 text-sm leading-6 text-[#fffaf2]/82">Com atenção aos detalhes e à sua preferência.</p></div>
-                <div className="border-t border-white/20 pt-4"><span className="text-xs uppercase tracking-[0.15em] text-[#edc3b1]">Bem-estar</span><p className="mt-1 text-sm leading-6 text-[#fffaf2]/82">Um espaço reservado para o seu autocuidado.</p></div>
+                <div className="border-t border-white/20 pt-4"><span className="text-xs uppercase tracking-[0.15em] text-[#edc3b1]">Em constante evolução</span><p className="mt-2 text-sm leading-6 text-[#fffaf2]/82">Estou sempre aprendendo para oferecer um atendimento cada vez mais atento e especial.</p></div>
+                <div className="border-t border-white/20 pt-4"><span className="text-xs uppercase tracking-[0.15em] text-[#edc3b1]">Bem-estar na rotina</span><p className="mt-2 text-sm leading-6 text-[#fffaf2]/82">Treino, corrida e momentos tranquilos fazem parte da minha forma de viver e cuidar de mim.</p></div>
               </div>
             </div>
           </div>
