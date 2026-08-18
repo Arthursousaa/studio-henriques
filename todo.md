@@ -14,3 +14,4 @@
 - [x] Permitir que a administradora proprietária promova a conta da Jaqueline a administradora no painel após o primeiro login dela.
 - [x] Validar a promoção de acesso para a proprietária e o bloqueio de outras administradoras nos testes automatizados.
 - [x] Exibir a ação de promoção de administradora apenas para a conta proprietária do projeto.
+- [x] Confirmar que a conta proprietária atual permanece como administradora junto da conta da Jaqueline.
