@@ -188,14 +188,14 @@ function AdminContent() {
       </section>
 
       <section className="rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-5 shadow-[0_20px_50px_-42px_rgba(60,37,30,0.48)] sm:p-7">
-        <div className="border-b border-[#342923]/10 pb-5"><div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Solicitações de agendamento</h2></div><p className="mt-1 text-sm text-[#705e56]">Cada pedido também abre uma conversa para você confirmar a disponibilidade com a cliente.</p></div>
+        <div className="border-b border-[#342923]/10 pb-5"><div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Pedidos de informações</h2></div><p className="mt-1 text-sm text-[#705e56]">Entre em contato com a cliente para responder às dúvidas e combinar os detalhes do atendimento.</p></div>
         <div className="mt-2 divide-y divide-[#342923]/10">
           {bookingsQuery.isLoading && <p className="py-8 text-sm text-[#705e56]">Carregando solicitações...</p>}
-          {!bookingsQuery.isLoading && bookings.length === 0 && <div className="py-12 text-center"><span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-[#f2e2d7] text-[#92554a]"><Clock3 className="h-5 w-5" /></span><p className="mt-4 font-semibold">Ainda não há solicitações.</p><p className="mt-1 text-sm text-[#705e56]">Quando uma cliente pedir horário pelo site, ela aparecerá aqui.</p></div>}
+          {!bookingsQuery.isLoading && bookings.length === 0 && <div className="py-12 text-center"><span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-[#f2e2d7] text-[#92554a]"><Clock3 className="h-5 w-5" /></span><p className="mt-4 font-semibold">Ainda não há solicitações.</p><p className="mt-1 text-sm text-[#705e56]">Quando uma cliente pedir informações pelo site, ela aparecerá aqui.</p></div>}
           {bookings.map(booking => (
             <article key={booking.id} className="grid gap-4 py-5 lg:grid-cols-[1.1fr_0.8fr_0.9fr_160px] lg:items-center">
               <div><p className="font-semibold text-[#342923]">{booking.customerName}</p><p className="mt-1 text-sm text-[#705e56]">{booking.serviceName} · {booking.customerPhone}</p>{booking.notes && <p className="mt-2 text-xs leading-5 text-[#8a756d]">“{booking.notes}”</p>}</div>
-              <div><p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Horário pedido</p><p className="mt-1 text-sm font-medium text-[#5b3b35]">{formatDate(booking.scheduledAt)}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Enviado em</p><p className="mt-1 text-sm font-medium text-[#5b3b35]">{formatDate(booking.createdAt)}</p></div>
               <div><Badge className={`rounded-full px-3 py-1 ${statusClass[booking.status]}`}>{statusLabel[booking.status]}</Badge></div>
               <select aria-label={`Alterar status de ${booking.customerName}`} value={booking.status} onChange={event => updateBooking.mutate({ id: booking.id, status: event.target.value as keyof typeof statusLabel })} disabled={updateBooking.isPending} className="h-10 rounded-xl border border-[#342923]/15 bg-white px-3 text-sm text-[#5b3b35] outline-none focus:border-[#a4675d]">
                 {Object.entries(statusLabel).map(([value, label]) => <option value={value} key={value}>{label}</option>)}

@@ -1,0 +1,1 @@
+ALTER TABLE `studio_bookings` MODIFY COLUMN `scheduledAt` timestamp;

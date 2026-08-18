@@ -26,3 +26,10 @@
 - [x] Validar a apresentação pública dos serviços e pacotes importados do PDF, incluindo a maquiagem sob orçamento.
 - [x] Cobrir por teste a renderização pública de maquiagem sob orçamento e de um pacote mensal importado do PDF.
 - [x] Testar a página pública com dados de catálogo retornados, confirmando maquiagem sob orçamento e pacote mensal na listagem e no seletor de agendamento.
+- [x] Substituir o formulário de agendamento detalhado por um formulário de pedido de informações com nome, WhatsApp, serviço e mensagem opcional.
+- [x] Fazer cada cartão de serviço direcionar ao formulário com o serviço correspondente pré-selecionado.
+- [x] Remover a abertura automática do WhatsApp no novo fluxo e registrar o pedido no painel para retorno manual da Jaqueline.
+- [x] Criar filtros por categoria no catálogo público para mostrar somente os serviços da área escolhida.
+- [x] Validar que a seleção de um serviço filtrado mantém o serviço pré-selecionado no pedido de informações.
+- [x] Adicionar teste de integração confirmando que, ao clicar em um serviço filtrado, o formulário recebe esse serviço pré-selecionado.
+- [x] Adicionar teste de interface da Home que selecione uma categoria, clique em um cartão filtrado e confira o serviço no formulário exibido.

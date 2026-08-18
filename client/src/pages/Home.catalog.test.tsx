@@ -1,6 +1,8 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { selectServiceForInfoRequest } from "../lib/infoRequestSelection";
+import { filterServicesByCategory } from "../lib/serviceFilters";
 import { PublicServiceCard, PublicServiceOptions, type PublicStudioService } from "./Home";
 
 const importedServices: PublicStudioService[] = [
@@ -23,5 +25,14 @@ describe("catálogo público importado", () => {
 
     expect(markup).toContain("Maquiagem — Sob orçamento");
     expect(markup).toContain("Pacote Bronze — R$ 150,00");
+  });
+
+  it("mantém o serviço escolhido no pedido de informações após filtrar a categoria", () => {
+    const bemEstar = filterServicesByCategory(importedServices, "Bem-estar");
+    const form = selectServiceForInfoRequest({ serviceId: "", customerName: "Ana", customerPhone: "11999999999", notes: "" }, bemEstar[0].id);
+
+    expect(bemEstar).toHaveLength(1);
+    expect(bemEstar[0].name).toBe("Maquiagem");
+    expect(form.serviceId).toBe("14");
   });
 });

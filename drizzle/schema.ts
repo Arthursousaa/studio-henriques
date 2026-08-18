@@ -61,7 +61,7 @@ export const studioBookings = mysqlTable("studio_bookings", {
   customerName: varchar("customerName", { length: 120 }).notNull(),
   customerPhone: varchar("customerPhone", { length: 24 }).notNull(),
   notes: text("notes"),
-  scheduledAt: timestamp("scheduledAt").notNull(),
+  scheduledAt: timestamp("scheduledAt"),
   status: studioBookingStatus.notNull().default("requested"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

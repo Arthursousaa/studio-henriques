@@ -197,7 +197,6 @@ export async function createStudioBooking(values: {
   customerName: string;
   customerPhone: string;
   notes?: string;
-  scheduledAt: Date;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível");
@@ -223,7 +222,7 @@ export async function listStudioBookings() {
     })
     .from(studioBookings)
     .innerJoin(studioServices, eq(studioBookings.serviceId, studioServices.id))
-    .orderBy(desc(studioBookings.scheduledAt));
+    .orderBy(desc(studioBookings.createdAt));
 }
 
 export async function updateStudioBookingStatus(

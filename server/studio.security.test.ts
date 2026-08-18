@@ -31,19 +31,17 @@ describe("Studio Henriques security", () => {
     });
   });
 
-  it("rejects booking requests for past dates before any booking is created", async () => {
+  it("requires the customer name before a request for information is created", async () => {
     const caller = appRouter.createCaller(createContext(null));
 
     await expect(
       caller.studio.requestBooking({
         serviceId: 1,
-        customerName: "Cliente de teste",
+        customerName: "",
         customerPhone: "11999999999",
-        scheduledAt: new Date(Date.now() - 120_000),
       }),
     ).rejects.toMatchObject({
       code: "BAD_REQUEST",
-      message: "Escolha uma data e horário futuros.",
     });
   });
 });

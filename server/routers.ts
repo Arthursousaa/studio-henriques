@@ -38,16 +38,9 @@ export const appRouter = router({
           customerName: z.string().trim().min(2).max(120),
           customerPhone: z.string().trim().min(8).max(24),
           notes: z.string().trim().max(600).optional(),
-          scheduledAt: z.date(),
         }),
       )
       .mutation(async ({ input }) => {
-        if (input.scheduledAt.getTime() < Date.now() - 60_000) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Escolha uma data e horário futuros.",
-          });
-        }
         const service = await getStudioService(input.serviceId);
         if (!service || !service.isActive) {
           throw new TRPCError({

@@ -70,7 +70,6 @@ describe("Studio Henriques core flows", () => {
     dbMocks.getStudioService.mockResolvedValue(activeService);
     dbMocks.createStudioBooking.mockResolvedValue(undefined);
     const caller = appRouter.createCaller(createContext(null));
-    const scheduledAt = new Date(Date.now() + 86_400_000);
 
     await expect(
       caller.studio.requestBooking({
@@ -78,7 +77,6 @@ describe("Studio Henriques core flows", () => {
         customerName: "Ana Silva",
         customerPhone: "11999999999",
         notes: "Prefiro horário pela manhã.",
-        scheduledAt,
       }),
     ).resolves.toEqual({ success: true });
 
@@ -88,7 +86,6 @@ describe("Studio Henriques core flows", () => {
       customerName: "Ana Silva",
       customerPhone: "11999999999",
       notes: "Prefiro horário pela manhã.",
-      scheduledAt,
     });
   });
 

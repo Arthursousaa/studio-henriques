@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { selectServiceForInfoRequest } from "@/lib/infoRequestSelection";
 import { formatServicePrice } from "@/lib/servicePresentation";
+import { filterServicesByCategory, getServiceCategories } from "@/lib/serviceFilters";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowRight,
@@ -22,15 +24,10 @@ import {
 import React, { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-const WHATSAPP_NUMBER = "5511992698360";
-const minimumDate = new Date().toISOString().slice(0, 10);
-
-type BookingForm = {
+type InfoRequestForm = {
   serviceId: string;
   customerName: string;
   customerPhone: string;
-  date: string;
-  time: string;
   notes: string;
 };
 
@@ -44,12 +41,10 @@ export type PublicStudioService = {
   isPriceOnRequest: boolean;
 };
 
-const initialForm: BookingForm = {
+const initialForm: InfoRequestForm = {
   serviceId: "",
   customerName: "",
   customerPhone: "",
-  date: "",
-  time: "",
   notes: "",
 };
 
@@ -76,7 +71,7 @@ export function PublicServiceCard({ service, onSelect }: { service: PublicStudio
         <div className="mt-5 flex items-center justify-between border-t border-[#342923]/10 pt-4">
           <span className="font-semibold text-[#5b3b35]">{formatServicePrice(service.price, service.isPriceOnRequest)}</span>
           <button className="text-sm font-semibold text-[#a4675d] transition-colors hover:text-[#5b3b35]" onClick={() => onSelect(service.id)}>
-            Agendar <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+            Quero saber mais <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -90,10 +85,14 @@ export function PublicServiceOptions({ services }: { services: PublicStudioServi
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [form, setForm] = useState<BookingForm>(initialForm);
+  const [form, setForm] = useState<InfoRequestForm>(initialForm);
+  const [selectedCategory, setSelectedCategory] = useState("Todos");
   const servicesQuery = trpc.studio.services.useQuery();
   const createBooking = trpc.studio.requestBooking.useMutation({
-    onSuccess: () => toast.success("Pedido registrado. Agora confirme os detalhes no WhatsApp."),
+    onSuccess: () => {
+      toast.success("Pedido enviado! Em breve o Studio Henriques entrará em contato.");
+      setForm(initialForm);
+    },
     onError: error => toast.error(error.message || "Não foi possível registrar o pedido."),
   });
 
@@ -102,57 +101,31 @@ export default function Home() {
     () => services.find(service => service.id === Number(form.serviceId)),
     [form.serviceId, services],
   );
+  const serviceCategories = useMemo(() => getServiceCategories(services), [services]);
+  const filteredServices = useMemo(() => filterServicesByCategory(services, selectedCategory), [services, selectedCategory]);
 
   function scrollToBooking() {
     document.querySelector("#agendar")?.scrollIntoView({ behavior: "smooth" });
     setMenuOpen(false);
   }
 
-  function updateForm(field: keyof BookingForm, value: string) {
+  function updateForm(field: keyof InfoRequestForm, value: string) {
     setForm(current => ({ ...current, [field]: value }));
   }
 
   function handleBooking(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedService || !form.customerName || !form.customerPhone || !form.date || !form.time) {
-      toast.error("Preencha seu nome, telefone, serviço, data e horário para continuar.");
+    if (!selectedService || !form.customerName || !form.customerPhone) {
+      toast.error("Preencha seu nome, WhatsApp e serviço para enviar o pedido.");
       return;
     }
-
-    const scheduledAt = new Date(`${form.date}T${form.time}:00`);
-    if (Number.isNaN(scheduledAt.getTime()) || scheduledAt.getTime() < Date.now()) {
-      toast.error("Escolha uma data e horário futuros.");
-      return;
-    }
-
-    const message = [
-      "Olá, Studio Henriques! Gostaria de solicitar um agendamento.",
-      "",
-      `Serviço: ${selectedService.name}`,
-      `Data desejada: ${new Intl.DateTimeFormat("pt-BR").format(scheduledAt)}`,
-      `Horário desejado: ${form.time}`,
-      `Cliente: ${form.customerName}`,
-      `Telefone: ${form.customerPhone}`,
-      form.notes ? `Observações: ${form.notes}` : "",
-      "",
-      "Pode confirmar a disponibilidade, por favor?",
-    ]
-      .filter(Boolean)
-      .join("\n");
 
     createBooking.mutate({
       serviceId: selectedService.id,
       customerName: form.customerName,
       customerPhone: form.customerPhone,
       notes: form.notes || undefined,
-      scheduledAt,
     });
-
-    window.open(
-      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
   }
 
   return (
@@ -240,15 +213,30 @@ export default function Home() {
               <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Cuidado pensado para você.</h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-[#705e56] lg:pb-1">
-              Escolha o cuidado que mais combina com o seu momento. Consulte os valores, selecione o serviço desejado e faça sua solicitação de horário.
+              Escolha uma categoria para ver apenas os cuidados que procura. Ao tocar em um serviço, ele já fica selecionado no seu pedido de informações.
             </p>
+          </div>
+
+          <div className="mt-9 flex flex-wrap gap-2" role="tablist" aria-label="Categorias de serviços">
+            {serviceCategories.map(category => (
+              <button
+                key={category}
+                role="tab"
+                aria-selected={selectedCategory === category}
+                onClick={() => setSelectedCategory(category)}
+                className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all active:scale-[0.98] ${selectedCategory === category ? "border-[#5b3b35] bg-[#5b3b35] text-[#fffaf2] shadow-sm" : "border-[#342923]/15 bg-[#fffdf9] text-[#705e56] hover:border-[#a4675d]/50 hover:text-[#5b3b35]"}`}
+              >
+                {category}
+              </button>
+            ))}
           </div>
 
           <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {servicesQuery.isLoading && Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="h-64 animate-pulse rounded-[1.5rem] bg-[#f1e8df]" />
             ))}
-            {services.map(service => <PublicServiceCard key={service.id} service={service} onSelect={id => { updateForm("serviceId", String(id)); scrollToBooking(); }} />)}
+            {filteredServices.map(service => <PublicServiceCard key={service.id} service={service} onSelect={id => { setForm(current => selectServiceForInfoRequest(current, id)); scrollToBooking(); }} />)}
+            {!servicesQuery.isLoading && filteredServices.length === 0 && <p className="col-span-full rounded-2xl border border-dashed border-[#342923]/15 bg-[#fffdf9] p-8 text-center text-sm text-[#705e56]">Nenhum serviço disponível nesta categoria no momento.</p>}
           </div>
         </section>
 
@@ -287,14 +275,14 @@ export default function Home() {
           <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,_#f1ddd1_0%,_transparent_72%)]" />
           <div className="container relative grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
             <div className="lg:pt-8">
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#a4675d]">Agendamento</p>
-              <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Vamos encontrar o melhor horário?</h2>
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#a4675d]">Mais informações</p>
+              <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Vamos conversar sobre o seu cuidado?</h2>
               <p className="mt-6 max-w-md text-base leading-7 text-[#705e56]">
-                Preencha seus dados e o WhatsApp do Studio será aberto com a sua solicitação já preparada. Você revisa a mensagem e decide se quer enviar.
+                Escolha um serviço, conte o que você precisa e deixe seu WhatsApp. A Jaqueline retornará para esclarecer dúvidas e combinar o melhor horário.
               </p>
               <div className="mt-8 rounded-2xl border border-[#d7b9aa] bg-[#fffaf2] p-5 text-sm leading-6 text-[#6c5048]">
-                <div className="mb-2 flex items-center gap-2 font-semibold text-[#5b3b35]"><MessageCircle className="h-4 w-4" /> Envio sob seu controle</div>
-                O site não envia mensagens automaticamente e não testa o número de WhatsApp. A confirmação de disponibilidade acontece diretamente na conversa.
+                <div className="mb-2 flex items-center gap-2 font-semibold text-[#5b3b35]"><MessageCircle className="h-4 w-4" /> Atendimento personalizado</div>
+                Seu pedido é enviado para o Studio Henriques. A confirmação de horário e os detalhes são combinados diretamente com você.
               </div>
             </div>
 
@@ -315,23 +303,15 @@ export default function Home() {
                   <Label htmlFor="customerPhone" className="text-sm font-semibold">Seu WhatsApp</Label>
                   <Input id="customerPhone" type="tel" value={form.customerPhone} onChange={event => updateForm("customerPhone", event.target.value)} placeholder="(11) 99999-9999" className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
                 </div>
-                <div>
-                  <Label htmlFor="date" className="text-sm font-semibold">Data desejada</Label>
-                  <Input id="date" type="date" min={minimumDate} value={form.date} onChange={event => updateForm("date", event.target.value)} className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
-                </div>
-                <div>
-                  <Label htmlFor="time" className="text-sm font-semibold">Horário desejado</Label>
-                  <Input id="time" type="time" value={form.time} onChange={event => updateForm("time", event.target.value)} className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
-                </div>
                 <div className="sm:col-span-2">
-                  <Label htmlFor="notes" className="text-sm font-semibold">Observações <span className="font-normal text-[#705e56]">(opcional)</span></Label>
-                  <Textarea id="notes" value={form.notes} onChange={event => updateForm("notes", event.target.value)} maxLength={600} placeholder="Conte algo importante para o seu atendimento." className="mt-2 min-h-24 resize-y rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
+                  <Label htmlFor="notes" className="text-sm font-semibold">Como podemos ajudar? <span className="font-normal text-[#705e56]">(opcional)</span></Label>
+                  <Textarea id="notes" value={form.notes} onChange={event => updateForm("notes", event.target.value)} maxLength={600} placeholder="Conte qual informação você gostaria de receber." className="mt-2 min-h-24 resize-y rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
                 </div>
               </div>
               <Button type="submit" disabled={createBooking.isPending || servicesQuery.isLoading} className="mt-7 h-12 w-full rounded-full bg-[#5b3b35] text-sm font-semibold text-[#fffaf2] hover:bg-[#754d45] active:scale-[0.98]">
-                <MessageCircle className="mr-2 h-4 w-4" /> {createBooking.isPending ? "Preparando solicitação..." : "Continuar para o WhatsApp"}
+                <MessageCircle className="mr-2 h-4 w-4" /> {createBooking.isPending ? "Enviando pedido..." : "Enviar pedido de informações"}
               </Button>
-              <p className="mt-3 text-center text-xs leading-5 text-[#8a756d]">A mensagem será apenas preenchida no WhatsApp. O envio é feito por você.</p>
+              <p className="mt-3 text-center text-xs leading-5 text-[#8a756d]">O Studio Henriques entrará em contato pelo WhatsApp informado.</p>
             </form>
           </div>
         </section>
