@@ -185,7 +185,7 @@ export async function getStudioService(id: number) {
 
 export async function updateStudioService(
   id: number,
-  values: { price: string; isActive: boolean },
+  values: { price: string; isPriceOnRequest: boolean; isActive: boolean },
 ) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível");

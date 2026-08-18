@@ -34,7 +34,8 @@ const statusClass = {
   cancelled: "bg-[#f2dfdd] text-[#8a4239]",
 } as const;
 
-function displayPrice(price: string) {
+function displayPrice(price: string, isPriceOnRequest = false) {
+  if (isPriceOnRequest) return "Sob orçamento";
   const value = Number(price);
   if (!value) return "A definir";
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -59,6 +60,7 @@ function AdminContent() {
   const { user, loading } = useAuth();
   const utils = trpc.useUtils();
   const [draftPrices, setDraftPrices] = useState<Record<number, string>>({});
+  const [draftQuoteOnly, setDraftQuoteOnly] = useState<Record<number, boolean>>({});
   const isAdmin = user?.role === "admin";
   const accessQuery = trpc.admin.access.useQuery(undefined, { enabled: isAdmin });
   const servicesQuery = trpc.admin.services.useQuery(undefined, { enabled: isAdmin });
@@ -93,6 +95,13 @@ function AdminContent() {
       const next = { ...current };
       servicesQuery.data.forEach(service => {
         if (next[service.id] === undefined) next[service.id] = service.price;
+      });
+      return next;
+    });
+    setDraftQuoteOnly(current => {
+      const next = { ...current };
+      servicesQuery.data.forEach(service => {
+        if (next[service.id] === undefined) next[service.id] = service.isPriceOnRequest;
       });
       return next;
     });
@@ -144,17 +153,18 @@ function AdminContent() {
         </div>
         <div className="mt-2 divide-y divide-[#342923]/10">
           {servicesQuery.isLoading && <p className="py-8 text-sm text-[#705e56]">Carregando serviços...</p>}
-          {servicesQuery.data?.map(service => {
-            const draft = draftPrices[service.id] ?? service.price;
-            return (
-              <div key={service.id} className="grid gap-4 py-5 lg:grid-cols-[1fr_160px_150px] lg:items-center">
+            {servicesQuery.data?.map(service => {
+              const draft = draftPrices[service.id] ?? service.price;
+              const quoteOnly = draftQuoteOnly[service.id] ?? service.isPriceOnRequest;
+              return (
+              <div key={service.id} className="grid gap-4 py-5 lg:grid-cols-[1fr_190px_150px] lg:items-center">
                 <div><p className="font-semibold text-[#342923]">{service.name}</p><p className="mt-1 text-sm text-[#705e56]">{service.description}</p></div>
-                <div><label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]" htmlFor={`price-${service.id}`}>Preço em R$</label><Input id={`price-${service.id}`} inputMode="decimal" value={draft} onChange={event => setDraftPrices(current => ({ ...current, [service.id]: event.target.value.replace(",", ".") }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></div>
+                <div><label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]" htmlFor={`price-${service.id}`}>Preço em R$</label><Input id={`price-${service.id}`} inputMode="decimal" value={draft} disabled={quoteOnly} onChange={event => setDraftPrices(current => ({ ...current, [service.id]: event.target.value.replace(",", ".") }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white disabled:bg-[#f4eee8]" /><label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-[#705e56]"><input type="checkbox" checked={quoteOnly} onChange={event => setDraftQuoteOnly(current => ({ ...current, [service.id]: event.target.checked }))} className="h-3.5 w-3.5 accent-[#5b3b35]" />Sob orçamento</label></div>
                 <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                  <Button size="sm" disabled={updateService.isPending} onClick={() => updateService.mutate({ id: service.id, price: draft || "0", isActive: service.isActive })} className="h-10 rounded-full bg-[#5b3b35] px-4 text-[#fffaf2] hover:bg-[#754d45]"><Save className="mr-1.5 h-3.5 w-3.5" />Salvar</Button>
-                  <Button size="sm" variant="outline" disabled={updateService.isPending} onClick={() => updateService.mutate({ id: service.id, price: draft || "0", isActive: !service.isActive })} className="h-10 rounded-full border-[#342923]/15 bg-white px-4 text-[#5b3b35] hover:bg-[#f3e4da]">{service.isActive ? "Ocultar" : "Exibir"}</Button>
+                  <Button size="sm" disabled={updateService.isPending} onClick={() => updateService.mutate({ id: service.id, price: quoteOnly ? "0" : draft || "0", isPriceOnRequest: quoteOnly, isActive: service.isActive })} className="h-10 rounded-full bg-[#5b3b35] px-4 text-[#fffaf2] hover:bg-[#754d45]"><Save className="mr-1.5 h-3.5 w-3.5" />Salvar</Button>
+                  <Button size="sm" variant="outline" disabled={updateService.isPending} onClick={() => updateService.mutate({ id: service.id, price: quoteOnly ? "0" : draft || "0", isPriceOnRequest: quoteOnly, isActive: !service.isActive })} className="h-10 rounded-full border-[#342923]/15 bg-white px-4 text-[#5b3b35] hover:bg-[#f3e4da]">{service.isActive ? "Ocultar" : "Exibir"}</Button>
                 </div>
-                <p className="text-xs text-[#8a756d] lg:col-start-2 lg:col-end-4">Exibido atualmente: {displayPrice(service.price)} · {service.isActive ? "ativo" : "oculto"}</p>
+                <p className="text-xs text-[#8a756d] lg:col-start-2 lg:col-end-4">Exibido atualmente: {displayPrice(service.price, service.isPriceOnRequest)} · {service.isActive ? "ativo" : "oculto"}</p>
               </div>
             );
           })}

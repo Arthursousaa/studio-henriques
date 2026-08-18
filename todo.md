@@ -19,3 +19,10 @@
 - [x] Remover os links de acesso interno da navegação e do rodapé públicos para manter a experiência exclusivamente voltada às clientes.
 - [x] Criar uma seção “Sobre a Jaqueline” com apresentação profissional baseada no texto e na identidade visual fornecidos.
 - [x] Alinhar explicitamente a seção “Sobre a Jaqueline” à paleta turquesa e dourada, ao monograma e à assinatura visual de estética da referência enviada.
+- [x] Analisar o PDF enviado e incorporar ao site apenas os conteúdos e materiais relevantes para as clientes.
+- [x] Atualizar o catálogo público e editável com os serviços, descrições e preços informados no menu enviado.
+- [x] Incluir os dados de contato e endereço do Studio Henriques fornecidos no PDF.
+- [x] Exibir serviços sob orçamento sem um preço numérico incorreto no catálogo e no painel.
+- [x] Validar a apresentação pública dos serviços e pacotes importados do PDF, incluindo a maquiagem sob orçamento.
+- [x] Cobrir por teste a renderização pública de maquiagem sob orçamento e de um pacote mensal importado do PDF.
+- [x] Testar a página pública com dados de catálogo retornados, confirmando maquiagem sob orçamento e pacote mensal na listagem e no seletor de agendamento.

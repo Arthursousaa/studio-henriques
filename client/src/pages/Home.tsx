@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { formatServicePrice } from "@/lib/servicePresentation";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowRight,
@@ -18,7 +19,7 @@ import {
   WandSparkles,
   X,
 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import React, { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const WHATSAPP_NUMBER = "5511992698360";
@@ -33,6 +34,16 @@ type BookingForm = {
   notes: string;
 };
 
+export type PublicStudioService = {
+  id: number;
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  price: string;
+  isPriceOnRequest: boolean;
+};
+
 const initialForm: BookingForm = {
   serviceId: "",
   customerName: "",
@@ -42,15 +53,6 @@ const initialForm: BookingForm = {
   notes: "",
 };
 
-function formatPrice(price: string) {
-  const value = Number(price);
-  if (!value) return "Consulte o valor";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-}
-
 function ServiceIcon({ slug }: { slug: string }) {
   const className = "h-5 w-5";
   if (slug === "sobrancelhas") return <Eye className={className} />;
@@ -59,6 +61,31 @@ function ServiceIcon({ slug }: { slug: string }) {
   if (slug === "alongamentos") return <Sparkles className={className} />;
   if (slug === "pedicure") return <Scissors className={className} />;
   return <Hand className={className} />;
+}
+
+export function PublicServiceCard({ service, onSelect }: { service: PublicStudioService; onSelect: (id: number) => void }) {
+  return (
+    <article className="group flex min-h-64 flex-col rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-6 shadow-[0_16px_40px_-32px_rgba(60,37,30,0.45)] transition-all duration-200 hover:-translate-y-1 hover:border-[#a4675d]/30 hover:shadow-[0_22px_45px_-30px_rgba(60,37,30,0.55)]">
+      <div className="flex items-start justify-between">
+        <span className="grid h-11 w-11 place-items-center rounded-full bg-[#f2e2d7] text-[#94594e]"><ServiceIcon slug={service.slug} /></span>
+        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a4675d]">{service.category}</span>
+      </div>
+      <div className="mt-auto pt-10">
+        <h3 className="font-serif text-2xl tracking-[-0.03em]">{service.name}</h3>
+        <p className="mt-2 min-h-12 text-sm leading-6 text-[#705e56]">{service.description}</p>
+        <div className="mt-5 flex items-center justify-between border-t border-[#342923]/10 pt-4">
+          <span className="font-semibold text-[#5b3b35]">{formatServicePrice(service.price, service.isPriceOnRequest)}</span>
+          <button className="text-sm font-semibold text-[#a4675d] transition-colors hover:text-[#5b3b35]" onClick={() => onSelect(service.id)}>
+            Agendar <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+export function PublicServiceOptions({ services }: { services: PublicStudioService[] }) {
+  return <>{services.map(service => <option value={service.id} key={service.id}>{service.name} — {formatServicePrice(service.price, service.isPriceOnRequest)}</option>)}</>;
 }
 
 export default function Home() {
@@ -221,24 +248,7 @@ export default function Home() {
             {servicesQuery.isLoading && Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="h-64 animate-pulse rounded-[1.5rem] bg-[#f1e8df]" />
             ))}
-            {services.map(service => (
-              <article key={service.id} className="group flex min-h-64 flex-col rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-6 shadow-[0_16px_40px_-32px_rgba(60,37,30,0.45)] transition-all duration-200 hover:-translate-y-1 hover:border-[#a4675d]/30 hover:shadow-[0_22px_45px_-30px_rgba(60,37,30,0.55)]">
-                <div className="flex items-start justify-between">
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-[#f2e2d7] text-[#94594e]"><ServiceIcon slug={service.slug} /></span>
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a4675d]">{service.category}</span>
-                </div>
-                <div className="mt-auto pt-10">
-                  <h3 className="font-serif text-2xl tracking-[-0.03em]">{service.name}</h3>
-                  <p className="mt-2 min-h-12 text-sm leading-6 text-[#705e56]">{service.description}</p>
-                  <div className="mt-5 flex items-center justify-between border-t border-[#342923]/10 pt-4">
-                    <span className="font-semibold text-[#5b3b35]">{formatPrice(service.price)}</span>
-                    <button className="text-sm font-semibold text-[#a4675d] transition-colors hover:text-[#5b3b35]" onClick={() => { updateForm("serviceId", String(service.id)); scrollToBooking(); }}>
-                      Agendar <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
+            {services.map(service => <PublicServiceCard key={service.id} service={service} onSelect={id => { updateForm("serviceId", String(id)); scrollToBooking(); }} />)}
           </div>
         </section>
 
@@ -294,7 +304,7 @@ export default function Home() {
                   <Label htmlFor="service" className="text-sm font-semibold">Qual serviço você deseja?</Label>
                   <select id="service" value={form.serviceId} onChange={event => updateForm("serviceId", event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-[#342923]/15 bg-white px-3 text-sm outline-none transition focus:border-[#a4675d] focus:ring-2 focus:ring-[#dcb4a4]/40">
                     <option value="">Selecione um serviço</option>
-                    {services.map(service => <option value={service.id} key={service.id}>{service.name} — {formatPrice(service.price)}</option>)}
+                    <PublicServiceOptions services={services} />
                   </select>
                 </div>
                 <div>
@@ -323,6 +333,23 @@ export default function Home() {
               </Button>
               <p className="mt-3 text-center text-xs leading-5 text-[#8a756d]">A mensagem será apenas preenchida no WhatsApp. O envio é feito por você.</p>
             </form>
+          </div>
+        </section>
+
+        <section id="contato" className="border-y border-[#342923]/10 bg-[#f5ede5]">
+          <div className="container grid gap-8 py-12 sm:grid-cols-3 sm:items-center sm:py-14">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a4675d]">Contato</p>
+              <h2 className="mt-2 font-serif text-3xl tracking-[-0.04em] text-[#342923]">Venha cuidar de você.</h2>
+            </div>
+            <div className="border-l-0 border-[#342923]/10 sm:border-l sm:pl-8">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#a4675d]">Endereço</p>
+              <p className="mt-2 text-sm leading-6 text-[#705e56]">Rua Ipatinga, 28A<br />Vila Princesa Isabel</p>
+            </div>
+            <div className="border-l-0 border-[#342923]/10 sm:border-l sm:pl-8">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#a4675d]">WhatsApp</p>
+              <a className="mt-2 inline-block text-base font-semibold text-[#5b3b35] transition-colors hover:text-[#a4675d]" href="https://wa.me/5511992698360" target="_blank" rel="noreferrer">(11) 99269-8360</a>
+            </div>
           </div>
         </section>
       </main>

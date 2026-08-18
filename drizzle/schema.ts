@@ -41,6 +41,7 @@ export const studioServices = mysqlTable("studio_services", {
   category: varchar("category", { length: 80 }).notNull(),
   description: text("description").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  isPriceOnRequest: boolean("isPriceOnRequest").notNull().default(false),
   isActive: boolean("isActive").notNull().default(true),
   sortOrder: int("sortOrder").notNull().default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

@@ -69,12 +69,14 @@ export const appRouter = router({
         z.object({
           id: z.number().int().positive(),
           price: z.string().regex(/^\d{1,7}(\.\d{1,2})?$/),
+          isPriceOnRequest: z.boolean(),
           isActive: z.boolean(),
         }),
       )
       .mutation(async ({ input }) => {
         await updateStudioService(input.id, {
           price: input.price,
+          isPriceOnRequest: input.isPriceOnRequest,
           isActive: input.isActive,
         });
         return { success: true } as const;

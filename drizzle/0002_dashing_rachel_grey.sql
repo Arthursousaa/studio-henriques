@@ -1,0 +1,1 @@
+ALTER TABLE `studio_services` ADD `isPriceOnRequest` boolean DEFAULT false NOT NULL;

@@ -44,6 +44,7 @@ const activeService = {
   category: "Unhas",
   description: "Cuidado para unhas.",
   price: "55.00",
+  isPriceOnRequest: false,
   isActive: true,
   sortOrder: 1,
   createdAt: new Date(),
@@ -96,12 +97,28 @@ describe("Studio Henriques core flows", () => {
     const caller = appRouter.createCaller(createContext("admin"));
 
     await expect(
-      caller.admin.updateService({ id: 1, price: "79.90", isActive: false }),
+      caller.admin.updateService({ id: 1, price: "79.90", isPriceOnRequest: false, isActive: false }),
     ).resolves.toEqual({ success: true });
 
     expect(dbMocks.updateStudioService).toHaveBeenCalledWith(1, {
       price: "79.90",
+      isPriceOnRequest: false,
       isActive: false,
+    });
+  });
+
+  it("lets the administrator mark a service as priced on request", async () => {
+    dbMocks.updateStudioService.mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("admin"));
+
+    await expect(
+      caller.admin.updateService({ id: 13, price: "0", isPriceOnRequest: true, isActive: true }),
+    ).resolves.toEqual({ success: true });
+
+    expect(dbMocks.updateStudioService).toHaveBeenCalledWith(13, {
+      price: "0",
+      isPriceOnRequest: true,
+      isActive: true,
     });
   });
 
