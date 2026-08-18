@@ -1,33 +1,333 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { trpc } from "@/lib/trpc";
+import {
+  ArrowRight,
+  CalendarDays,
+  Check,
+  Clock3,
+  Eye,
+  Hand,
+  HeartHandshake,
+  Menu,
+  MessageCircle,
+  Scissors,
+  Sparkles,
+  WandSparkles,
+  X,
+} from "lucide-react";
+import { FormEvent, useMemo, useState } from "react";
+import { toast } from "sonner";
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Workflow, Frontend Best Practices, Design Guide and Common Pitfalls
- */
+const WHATSAPP_NUMBER = "5511992698360";
+const minimumDate = new Date().toISOString().slice(0, 10);
+
+type BookingForm = {
+  serviceId: string;
+  customerName: string;
+  customerPhone: string;
+  date: string;
+  time: string;
+  notes: string;
+};
+
+const initialForm: BookingForm = {
+  serviceId: "",
+  customerName: "",
+  customerPhone: "",
+  date: "",
+  time: "",
+  notes: "",
+};
+
+function formatPrice(price: string) {
+  const value = Number(price);
+  if (!value) return "Consulte o valor";
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}
+
+function ServiceIcon({ slug }: { slug: string }) {
+  const className = "h-5 w-5";
+  if (slug === "sobrancelhas") return <Eye className={className} />;
+  if (slug === "depilacao") return <WandSparkles className={className} />;
+  if (slug === "massagem") return <HeartHandshake className={className} />;
+  if (slug === "alongamentos") return <Sparkles className={className} />;
+  if (slug === "pedicure") return <Scissors className={className} />;
+  return <Hand className={className} />;
+}
+
 export default function Home() {
-  // The useAuth hook provides authentication state.
-  // To implement login/logout, call logout(), or start login from an event
-  // handler: onClick={() => startLogin()} (imported from "@/const"). Never call
-  // startLogin() during render (no href={startLogin()}) — it mints a one-time
-  // nonce cookie and must run only at the moment of navigation.
-  let { user, loading, error, isAuthenticated, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [form, setForm] = useState<BookingForm>(initialForm);
+  const servicesQuery = trpc.studio.services.useQuery();
+  const createBooking = trpc.studio.requestBooking.useMutation({
+    onSuccess: () => toast.success("Pedido registrado. Agora confirme os detalhes no WhatsApp."),
+    onError: error => toast.error(error.message || "Não foi possível registrar o pedido."),
+  });
 
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
+  const services = servicesQuery.data ?? [];
+  const selectedService = useMemo(
+    () => services.find(service => service.id === Number(form.serviceId)),
+    [form.serviceId, services],
+  );
+
+  function scrollToBooking() {
+    document.querySelector("#agendar")?.scrollIntoView({ behavior: "smooth" });
+    setMenuOpen(false);
+  }
+
+  function updateForm(field: keyof BookingForm, value: string) {
+    setForm(current => ({ ...current, [field]: value }));
+  }
+
+  function handleBooking(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedService || !form.customerName || !form.customerPhone || !form.date || !form.time) {
+      toast.error("Preencha seu nome, telefone, serviço, data e horário para continuar.");
+      return;
+    }
+
+    const scheduledAt = new Date(`${form.date}T${form.time}:00`);
+    if (Number.isNaN(scheduledAt.getTime()) || scheduledAt.getTime() < Date.now()) {
+      toast.error("Escolha uma data e horário futuros.");
+      return;
+    }
+
+    const message = [
+      "Olá, Jaqueline! Gostaria de solicitar um agendamento no Studio Henriques.",
+      "",
+      `Serviço: ${selectedService.name}`,
+      `Data desejada: ${new Intl.DateTimeFormat("pt-BR").format(scheduledAt)}`,
+      `Horário desejado: ${form.time}`,
+      `Cliente: ${form.customerName}`,
+      `Telefone: ${form.customerPhone}`,
+      form.notes ? `Observações: ${form.notes}` : "",
+      "",
+      "Pode confirmar a disponibilidade, por favor?",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    createBooking.mutate({
+      serviceId: selectedService.id,
+      customerName: form.customerName,
+      customerPhone: form.customerPhone,
+      notes: form.notes || undefined,
+      scheduledAt,
+    });
+
+    window.open(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-[#fbf8f3] text-[#342923]">
+      <header className="sticky top-0 z-50 border-b border-[#342923]/10 bg-[#fbf8f3]/90 backdrop-blur-xl">
+        <div className="container flex h-[76px] items-center justify-between">
+          <a href="#inicio" className="group flex items-center gap-3" aria-label="Studio Henriques, início">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#5b3b35] font-serif text-lg text-[#fffaf2] shadow-sm transition-transform duration-200 group-hover:scale-105">
+              SH
+            </span>
+            <span className="leading-tight">
+              <span className="block font-serif text-xl tracking-[-0.03em]">Studio Henriques</span>
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8a6259]">beleza & bem-estar</span>
+            </span>
+          </a>
+
+          <nav className="hidden items-center gap-7 text-sm font-medium md:flex" aria-label="Navegação principal">
+            <a className="transition-colors hover:text-[#9d6156]" href="#servicos">Serviços</a>
+            <a className="transition-colors hover:text-[#9d6156]" href="#sobre">O studio</a>
+            <a className="transition-colors hover:text-[#9d6156]" href="#agendar">Agendar</a>
+            <a className="rounded-full border border-[#5b3b35]/20 px-4 py-2 transition-colors hover:bg-[#f0e1d8]" href="/admin">Área da Jaqueline</a>
+          </nav>
+
+          <button
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#5b3b35]/15 md:hidden"
+            onClick={() => setMenuOpen(current => !current)}
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+        {menuOpen && (
+          <nav className="border-t border-[#342923]/10 bg-[#fbf8f3] px-5 py-4 md:hidden" aria-label="Navegação móvel">
+            <div className="mx-auto flex max-w-md flex-col gap-3 text-sm font-medium">
+              <a onClick={() => setMenuOpen(false)} href="#servicos">Serviços</a>
+              <a onClick={() => setMenuOpen(false)} href="#sobre">O studio</a>
+              <button className="text-left" onClick={scrollToBooking}>Agendar</button>
+              <a href="/admin">Área da Jaqueline</a>
+            </div>
+          </nav>
+        )}
+      </header>
+
       <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
+        <section id="inicio" className="relative overflow-hidden bg-[#d9c0b0]">
+          <img
+            src="/manus-storage/studio-henriques-hero_66b3ef02.jpg"
+            alt="Atendimento de manicure em ambiente acolhedor"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#372720] via-[#372720]/90 to-[#372720]/10" />
+          <div className="container relative grid min-h-[620px] items-end py-16 sm:min-h-[660px] sm:py-20 lg:min-h-[690px]">
+            <div className="max-w-2xl text-[#fffaf2]">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#fffaf2]/30 bg-[#fffaf2]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5" /> Seu momento de cuidado começa aqui
+              </div>
+              <h1 className="max-w-xl font-serif text-5xl leading-[0.94] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
+                Beleza que acompanha o seu ritmo.
+              </h1>
+              <p className="mt-7 max-w-lg text-base leading-7 text-[#fffaf2]/82 sm:text-lg">
+                No Studio Henriques, Jaqueline une atenção aos detalhes e cuidado individual em cada atendimento de beleza e bem-estar.
+              </p>
+              <div className="mt-9 flex flex-wrap items-center gap-3">
+                <Button onClick={scrollToBooking} className="h-12 rounded-full bg-[#f9e8dd] px-6 text-sm font-semibold text-[#4e302a] shadow-lg transition-transform hover:bg-white active:scale-[0.97]">
+                  Agendar meu horário <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <a href="#servicos" className="rounded-full px-5 py-3 text-sm font-semibold text-[#fffaf2] transition-colors hover:bg-white/10">
+                  Conhecer serviços
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-y border-[#342923]/10 bg-[#f5ede5]">
+          <div className="container grid divide-y divide-[#342923]/10 py-3 text-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:py-0">
+            <div className="flex items-center gap-3 py-4 sm:justify-center"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><span>Agendamento simples pelo WhatsApp</span></div>
+            <div className="flex items-center gap-3 py-4 sm:justify-center"><Clock3 className="h-4 w-4 text-[#a4675d]" /><span>Atendimento com hora marcada</span></div>
+            <div className="flex items-center gap-3 py-4 sm:justify-center"><Check className="h-4 w-4 text-[#a4675d]" /><span>Preços sempre atualizados</span></div>
+          </div>
+        </section>
+
+        <section id="servicos" className="container py-20 sm:py-28">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+            <div>
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#a4675d]">Serviços</p>
+              <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Cuidado pensado para você.</h2>
+            </div>
+            <p className="max-w-xl text-base leading-7 text-[#705e56] lg:pb-1">
+              Escolha o serviço que mais combina com o seu momento. Os valores são atualizados diretamente pela Jaqueline no painel do studio.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {servicesQuery.isLoading && Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="h-64 animate-pulse rounded-[1.5rem] bg-[#f1e8df]" />
+            ))}
+            {services.map(service => (
+              <article key={service.id} className="group flex min-h-64 flex-col rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-6 shadow-[0_16px_40px_-32px_rgba(60,37,30,0.45)] transition-all duration-200 hover:-translate-y-1 hover:border-[#a4675d]/30 hover:shadow-[0_22px_45px_-30px_rgba(60,37,30,0.55)]">
+                <div className="flex items-start justify-between">
+                  <span className="grid h-11 w-11 place-items-center rounded-full bg-[#f2e2d7] text-[#94594e]"><ServiceIcon slug={service.slug} /></span>
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a4675d]">{service.category}</span>
+                </div>
+                <div className="mt-auto pt-10">
+                  <h3 className="font-serif text-2xl tracking-[-0.03em]">{service.name}</h3>
+                  <p className="mt-2 min-h-12 text-sm leading-6 text-[#705e56]">{service.description}</p>
+                  <div className="mt-5 flex items-center justify-between border-t border-[#342923]/10 pt-4">
+                    <span className="font-semibold text-[#5b3b35]">{formatPrice(service.price)}</span>
+                    <button className="text-sm font-semibold text-[#a4675d] transition-colors hover:text-[#5b3b35]" onClick={() => { updateForm("serviceId", String(service.id)); scrollToBooking(); }}>
+                      Agendar <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="sobre" className="overflow-hidden bg-[#5b3b35] text-[#fffaf2]">
+          <div className="container grid gap-12 py-20 sm:py-28 lg:grid-cols-2 lg:gap-24">
+            <div className="relative min-h-72 overflow-hidden rounded-[1.75rem] border border-white/15 bg-[#9d6c60] p-8 sm:min-h-96">
+              <div className="absolute -right-12 -top-10 h-56 w-56 rounded-full border-[28px] border-[#d8a796]/45" />
+              <div className="absolute -bottom-16 left-12 h-44 w-44 rounded-full bg-[#f3d6c8]/20" />
+              <div className="relative flex h-full flex-col justify-end">
+                <span className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-[#fffaf2] text-[#5b3b35]"><Sparkles className="h-5 w-5" /></span>
+                <p className="max-w-xs font-serif text-3xl leading-[1.05] tracking-[-0.04em]">Uma pausa que deixa a rotina mais leve.</p>
+              </div>
+            </div>
+            <div className="flex flex-col justify-center">
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#edc3b1]">Studio Henriques</p>
+              <h2 className="font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Cuidado com intenção, do seu jeito.</h2>
+              <p className="mt-7 max-w-lg text-base leading-7 text-[#fffaf2]/75">
+                Cada serviço é um convite para se sentir bem. Jaqueline Henriques oferece um atendimento próximo, acolhedor e atento ao que faz sentido para você.
+              </p>
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <div className="border-t border-white/20 pt-4"><span className="text-xs uppercase tracking-[0.15em] text-[#edc3b1]">Atendimento</span><p className="mt-1 text-sm leading-6 text-[#fffaf2]/82">Com atenção aos detalhes e à sua preferência.</p></div>
+                <div className="border-t border-white/20 pt-4"><span className="text-xs uppercase tracking-[0.15em] text-[#edc3b1]">Bem-estar</span><p className="mt-1 text-sm leading-6 text-[#fffaf2]/82">Um espaço reservado para o seu autocuidado.</p></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="agendar" className="relative overflow-hidden py-20 sm:py-28">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,_#f1ddd1_0%,_transparent_72%)]" />
+          <div className="container relative grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+            <div className="lg:pt-8">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#a4675d]">Agendamento</p>
+              <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Vamos encontrar o melhor horário?</h2>
+              <p className="mt-6 max-w-md text-base leading-7 text-[#705e56]">
+                Preencha seus dados e o WhatsApp da Jaqueline será aberto com a sua solicitação já preparada. Você revisa a mensagem e decide se quer enviar.
+              </p>
+              <div className="mt-8 rounded-2xl border border-[#d7b9aa] bg-[#fffaf2] p-5 text-sm leading-6 text-[#6c5048]">
+                <div className="mb-2 flex items-center gap-2 font-semibold text-[#5b3b35]"><MessageCircle className="h-4 w-4" /> Envio sob seu controle</div>
+                O site não envia mensagens automaticamente e não testa o número de WhatsApp. A confirmação de disponibilidade acontece diretamente na conversa.
+              </div>
+            </div>
+
+            <form onSubmit={handleBooking} className="rounded-[1.75rem] border border-[#342923]/10 bg-[#fffdf9] p-6 shadow-[0_25px_60px_-40px_rgba(60,37,30,0.55)] sm:p-8">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Label htmlFor="service" className="text-sm font-semibold">Qual serviço você deseja?</Label>
+                  <select id="service" value={form.serviceId} onChange={event => updateForm("serviceId", event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-[#342923]/15 bg-white px-3 text-sm outline-none transition focus:border-[#a4675d] focus:ring-2 focus:ring-[#dcb4a4]/40">
+                    <option value="">Selecione um serviço</option>
+                    {services.map(service => <option value={service.id} key={service.id}>{service.name} — {formatPrice(service.price)}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="customerName" className="text-sm font-semibold">Seu nome</Label>
+                  <Input id="customerName" value={form.customerName} onChange={event => updateForm("customerName", event.target.value)} placeholder="Como podemos te chamar?" className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
+                </div>
+                <div>
+                  <Label htmlFor="customerPhone" className="text-sm font-semibold">Seu WhatsApp</Label>
+                  <Input id="customerPhone" type="tel" value={form.customerPhone} onChange={event => updateForm("customerPhone", event.target.value)} placeholder="(11) 99999-9999" className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
+                </div>
+                <div>
+                  <Label htmlFor="date" className="text-sm font-semibold">Data desejada</Label>
+                  <Input id="date" type="date" min={minimumDate} value={form.date} onChange={event => updateForm("date", event.target.value)} className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
+                </div>
+                <div>
+                  <Label htmlFor="time" className="text-sm font-semibold">Horário desejado</Label>
+                  <Input id="time" type="time" value={form.time} onChange={event => updateForm("time", event.target.value)} className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="notes" className="text-sm font-semibold">Observações <span className="font-normal text-[#705e56]">(opcional)</span></Label>
+                  <Textarea id="notes" value={form.notes} onChange={event => updateForm("notes", event.target.value)} maxLength={600} placeholder="Conte algo que a Jaqueline deve saber antes do atendimento." className="mt-2 min-h-24 resize-y rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
+                </div>
+              </div>
+              <Button type="submit" disabled={createBooking.isPending || servicesQuery.isLoading} className="mt-7 h-12 w-full rounded-full bg-[#5b3b35] text-sm font-semibold text-[#fffaf2] hover:bg-[#754d45] active:scale-[0.98]">
+                <MessageCircle className="mr-2 h-4 w-4" /> {createBooking.isPending ? "Preparando solicitação..." : "Continuar para o WhatsApp"}
+              </Button>
+              <p className="mt-3 text-center text-xs leading-5 text-[#8a756d]">A mensagem será apenas preenchida no WhatsApp. O envio é feito por você.</p>
+            </form>
+          </div>
+        </section>
       </main>
+
+      <footer className="border-t border-[#342923]/10 bg-[#f5ede5]">
+        <div className="container flex flex-col justify-between gap-5 py-8 text-sm text-[#705e56] sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-[#5b3b35] font-serif text-xs text-white">SH</span><span>Studio Henriques · Jaqueline Henriques</span></div>
+          <div className="flex items-center gap-4"><a className="font-semibold text-[#5b3b35] hover:text-[#a4675d]" href="/admin">Painel administrativo</a><button onClick={scrollToBooking} className="font-semibold text-[#5b3b35] hover:text-[#a4675d]">Agendar</button></div>
+        </div>
+      </footer>
     </div>
   );
 }
