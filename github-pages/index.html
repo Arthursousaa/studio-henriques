@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Studio Henriques — estética, beleza e bem-estar." />
+    <title>Studio Henriques | Beleza & Bem-estar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header"><a class="brand" href="#inicio"><span>SH</span><strong>Studio Henriques<small>Beleza & Bem-estar</small></strong></a><nav><a href="#servicos">Serviços</a><a href="#sobre">Sobre</a><a href="#contato">Contato</a></nav></header>
+    <main>
+      <section class="hero" id="inicio"><p class="eyebrow">Seu momento de cuidado começa aqui</p><h1>Beleza que acompanha o seu ritmo.</h1><p>Um espaço pensado para você reservar um tempo, cuidar de si e sair ainda mais confiante.</p><a class="button" href="#servicos">Conhecer serviços</a></section>
+      <section class="section" id="servicos"><p class="eyebrow">Catálogo</p><h2>Escolha o seu cuidado</h2><p class="intro">Toque em uma categoria para encontrar o que procura. Ao escolher um serviço, seu pedido de informações já fica pronto.</p><div id="filters" class="filters" aria-label="Filtros de serviços"></div><div id="services" class="services"></div></section>
+      <section class="request" id="informacoes"><div><p class="eyebrow">Pedido de informações</p><h2>Vamos conversar sobre seu atendimento?</h2><p>Preencha seus dados e abra o WhatsApp com a sua solicitação preparada. O envio e a confirmação ficam sempre nas suas mãos.</p></div><form id="contactForm"><label>Serviço<select id="serviceSelect" required></select></label><label>Seu nome<input id="name" required placeholder="Como podemos te chamar?" /></label><label>Seu WhatsApp<input id="phone" required inputmode="tel" placeholder="(11) 99999-9999" /></label><label>Mensagem (opcional)<textarea id="message" placeholder="Conte algo importante para o seu atendimento."></textarea></label><button class="button" type="submit">Abrir WhatsApp</button><p class="form-note">O Studio confirmará disponibilidade e detalhes diretamente pelo WhatsApp.</p></form></section>
+      <section class="about section" id="sobre"><p class="eyebrow">Sobre a Jaqueline</p><h2>Cuidar de você também é a minha paixão.</h2><p>Sou Jaqueline Henriques, estudante de Estética e fundadora do Studio Henriques. Criei este espaço para oferecer cuidados, bem-estar e momentos especiais para cada cliente, porque acredito que estética também é confiança, autocuidado e amor-próprio.</p></section>
+      <section class="contact" id="contato"><div><p class="eyebrow">Contato</p><h2>Studio Henriques</h2><p>Rua São Carlos, 80 — Jardim Tereza Bononi<br />São Paulo — SP</p></div><a class="button secondary" href="https://wa.me/5511992698360" target="_blank" rel="noreferrer">Falar no WhatsApp</a></section>
+    </main>
+    <footer>© <span id="year"></span> Studio Henriques · Estética e Beleza</footer>
+    <script src="app.js"></script>
+  </body>
+</html>

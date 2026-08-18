@@ -36,3 +36,7 @@
 - [ ] Personalizar o endereço público do site com o nome escolhido pela proprietária ou conectar um domínio próprio.
 - [ ] Conectar e validar o domínio escolhido studiohenriques.com.br após compra ou disponibilidade da proprietária.
 - [x] Comparar hospedagens gratuitas que possam suportar uma futura migração do site completo com servidor, banco de dados e painel administrativo.
+- [x] Criar uma versão estática para GitHub Pages com apresentação, catálogo filtrável, preços e contatos do Studio Henriques.
+- [x] Adaptar o pedido de informações da versão estática para abrir o WhatsApp com o serviço selecionado, sem envio automático.
+- [x] Documentar quais funções administrativas não estarão disponíveis na versão estática e como atualizar serviços e preços no código.
+- [ ] Configurar o repositório para publicar a versão estática gratuitamente no GitHub Pages.
