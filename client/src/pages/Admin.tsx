@@ -3,21 +3,25 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatAppointmentSlot, whatsappConfirmationUrl } from "@/lib/appointmentConfirmation";
 import { trpc } from "@/lib/trpc";
 import {
+  Ban,
   CalendarDays,
   CheckCircle2,
   Clock3,
   ExternalLink,
   Inbox,
   LockKeyhole,
+  MessageCircle,
   Save,
   Settings2,
   ShieldCheck,
+  Trash2,
   UserRoundPlus,
   XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const statusLabel = {
@@ -32,6 +36,18 @@ const statusClass = {
   confirmed: "bg-[#dcecdf] text-[#32633c]",
   completed: "bg-[#dce7f3] text-[#345f86]",
   cancelled: "bg-[#f2dfdd] text-[#8a4239]",
+} as const;
+
+const availabilityLabel = {
+  available: "Disponível",
+  blocked: "Bloqueado",
+  booked: "Reservado",
+} as const;
+
+const availabilityClass = {
+  available: "bg-[#dcecdf] text-[#32633c]",
+  blocked: "bg-[#f2dfdd] text-[#8a4239]",
+  booked: "bg-[#e1e9f3] text-[#345f86]",
 } as const;
 
 function displayPrice(price: string, isPriceOnRequest = false) {
@@ -61,11 +77,17 @@ function AdminContent() {
   const utils = trpc.useUtils();
   const [draftPrices, setDraftPrices] = useState<Record<number, string>>({});
   const [draftQuoteOnly, setDraftQuoteOnly] = useState<Record<number, boolean>>({});
+  const [availabilityDraft, setAvailabilityDraft] = useState(() => ({
+    slotDate: new Date().toLocaleDateString("en-CA"),
+    startTime: "09:00",
+    endTime: "10:00",
+  }));
   const isAdmin = user?.role === "admin";
   const accessQuery = trpc.admin.access.useQuery(undefined, { enabled: isAdmin });
   const servicesQuery = trpc.admin.services.useQuery(undefined, { enabled: isAdmin });
   const bookingsQuery = trpc.admin.bookings.useQuery(undefined, { enabled: isAdmin });
   const usersQuery = trpc.admin.users.useQuery(undefined, { enabled: isAdmin });
+  const availabilityQuery = trpc.admin.availability.useQuery(undefined, { enabled: isAdmin });
   const updateService = trpc.admin.updateService.useMutation({
     onSuccess: () => {
       toast.success("Serviço atualizado.");
@@ -87,6 +109,33 @@ function AdminContent() {
       utils.admin.users.invalidate();
     },
     onError: error => toast.error(error.message || "Não foi possível atualizar o acesso."),
+  });
+  const createAvailability = trpc.admin.createAvailability.useMutation({
+    onSuccess: () => {
+      toast.success("Horário disponibilizado no calendário.");
+      utils.admin.availability.invalidate();
+      utils.studio.availableDates.invalidate();
+      utils.studio.availabilityForDate.invalidate();
+    },
+    onError: error => toast.error(error.message || "Não foi possível disponibilizar este horário."),
+  });
+  const updateAvailability = trpc.admin.updateAvailability.useMutation({
+    onSuccess: () => {
+      toast.success("Disponibilidade atualizada.");
+      utils.admin.availability.invalidate();
+      utils.studio.availableDates.invalidate();
+      utils.studio.availabilityForDate.invalidate();
+    },
+    onError: error => toast.error(error.message || "Não foi possível atualizar este horário."),
+  });
+  const deleteAvailability = trpc.admin.deleteAvailability.useMutation({
+    onSuccess: () => {
+      toast.success("Horário removido da agenda.");
+      utils.admin.availability.invalidate();
+      utils.studio.availableDates.invalidate();
+      utils.studio.availabilityForDate.invalidate();
+    },
+    onError: error => toast.error(error.message || "Não foi possível remover este horário."),
   });
 
   useEffect(() => {
@@ -148,6 +197,36 @@ function AdminContent() {
 
       <section className="rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-5 shadow-[0_20px_50px_-42px_rgba(60,37,30,0.48)] sm:p-7">
         <div className="flex flex-col justify-between gap-3 border-b border-[#342923]/10 pb-5 sm:flex-row sm:items-center">
+          <div><div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Agenda e horários</h2></div><p className="mt-1 max-w-2xl text-sm leading-6 text-[#705e56]">Cadastre os horários que as clientes poderão reservar. Você pode bloquear ou retirar horários, mas reservas confirmadas só são liberadas ao cancelar o atendimento.</p></div>
+          <Badge className="w-fit rounded-full bg-[#e0ecdf] px-3 py-1 text-[#427047] hover:bg-[#e0ecdf]">Calendário público</Badge>
+        </div>
+        <div className="mt-6 rounded-2xl bg-[#f8f2ec] p-4 sm:p-5">
+          <p className="text-sm font-semibold text-[#5b3b35]">Adicionar horário disponível</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-[1.2fr_1fr_1fr_auto] sm:items-end">
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Data<Input type="date" value={availabilityDraft.slotDate} min={new Date().toLocaleDateString("en-CA")} onChange={event => setAvailabilityDraft(current => ({ ...current, slotDate: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Início<Input type="time" value={availabilityDraft.startTime} onChange={event => setAvailabilityDraft(current => ({ ...current, startTime: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Término<Input type="time" value={availabilityDraft.endTime} onChange={event => setAvailabilityDraft(current => ({ ...current, endTime: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
+            <Button disabled={createAvailability.isPending} onClick={() => createAvailability.mutate(availabilityDraft)} className="h-10 rounded-full bg-[#5b3b35] px-5 text-[#fffaf2] hover:bg-[#754d45]"><CalendarDays className="mr-1.5 h-3.5 w-3.5" />Liberar</Button>
+          </div>
+        </div>
+        <div className="mt-4 divide-y divide-[#342923]/10">
+          {availabilityQuery.isLoading && <p className="py-8 text-sm text-[#705e56]">Carregando agenda...</p>}
+          {!availabilityQuery.isLoading && (availabilityQuery.data?.length ?? 0) === 0 && <p className="py-8 text-center text-sm leading-6 text-[#705e56]">Ainda não há horários liberados. Adicione a primeira data e hora que o Studio estará disponível.</p>}
+          {availabilityQuery.data?.map(slot => (
+            <article key={slot.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_auto_auto] sm:items-center">
+              <div><p className="font-semibold capitalize text-[#342923]">{formatAppointmentSlot(slot.slotDate, slot.startTime, slot.endTime)}</p><p className="mt-1 text-xs text-[#8a756d]">{slot.status === "booked" ? "Reservado por uma cliente" : slot.status === "blocked" ? "Não aparece para as clientes" : "Visível para reserva no site"}</p></div>
+              <Badge className={`w-fit rounded-full px-3 py-1 ${availabilityClass[slot.status]}`}>{availabilityLabel[slot.status]}</Badge>
+              <div className="flex flex-wrap gap-2 sm:justify-end">
+                {slot.status !== "booked" && <Button size="sm" variant="outline" disabled={updateAvailability.isPending} onClick={() => updateAvailability.mutate({ id: slot.id, status: slot.status === "available" ? "blocked" : "available" })} className="h-9 rounded-full border-[#342923]/15 bg-white px-3 text-[#5b3b35] hover:bg-[#f3e4da]">{slot.status === "available" ? <><Ban className="mr-1.5 h-3.5 w-3.5" />Bloquear</> : <><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />Liberar</>}</Button>}
+                {slot.status !== "booked" && <Button size="sm" variant="outline" disabled={deleteAvailability.isPending} onClick={() => deleteAvailability.mutate({ id: slot.id })} className="h-9 rounded-full border-[#342923]/15 bg-white px-3 text-[#8a4239] hover:bg-[#f7eae7]"><Trash2 className="mr-1.5 h-3.5 w-3.5" />Remover</Button>}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-5 shadow-[0_20px_50px_-42px_rgba(60,37,30,0.48)] sm:p-7">
+        <div className="flex flex-col justify-between gap-3 border-b border-[#342923]/10 pb-5 sm:flex-row sm:items-center">
           <div><div className="flex items-center gap-2"><Settings2 className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Serviços e preços</h2></div><p className="mt-1 text-sm text-[#705e56]">Edite os valores e defina o que ficará visível para as clientes.</p></div>
           <Badge className="w-fit rounded-full bg-[#f3e4da] px-3 py-1 text-[#7e4c43] hover:bg-[#f3e4da]">Alterações aparecem no site</Badge>
         </div>
@@ -188,18 +267,18 @@ function AdminContent() {
       </section>
 
       <section className="rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-5 shadow-[0_20px_50px_-42px_rgba(60,37,30,0.48)] sm:p-7">
-        <div className="border-b border-[#342923]/10 pb-5"><div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Pedidos de informações</h2></div><p className="mt-1 text-sm text-[#705e56]">Entre em contato com a cliente para responder às dúvidas e combinar os detalhes do atendimento.</p></div>
+        <div className="border-b border-[#342923]/10 pb-5"><div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Atendimentos e solicitações</h2></div><p className="mt-1 text-sm text-[#705e56]">Acompanhe a agenda. Para uma reserva, abra uma mensagem de confirmação pronta no WhatsApp e envie quando desejar.</p></div>
         <div className="mt-2 divide-y divide-[#342923]/10">
           {bookingsQuery.isLoading && <p className="py-8 text-sm text-[#705e56]">Carregando solicitações...</p>}
-          {!bookingsQuery.isLoading && bookings.length === 0 && <div className="py-12 text-center"><span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-[#f2e2d7] text-[#92554a]"><Clock3 className="h-5 w-5" /></span><p className="mt-4 font-semibold">Ainda não há solicitações.</p><p className="mt-1 text-sm text-[#705e56]">Quando uma cliente pedir informações pelo site, ela aparecerá aqui.</p></div>}
+          {!bookingsQuery.isLoading && bookings.length === 0 && <div className="py-12 text-center"><span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-[#f2e2d7] text-[#92554a]"><Clock3 className="h-5 w-5" /></span><p className="mt-4 font-semibold">Ainda não há atendimentos.</p><p className="mt-1 text-sm text-[#705e56]">Quando uma cliente reservar pelo site, o horário aparecerá aqui.</p></div>}
           {bookings.map(booking => (
-            <article key={booking.id} className="grid gap-4 py-5 lg:grid-cols-[1.1fr_0.8fr_0.9fr_160px] lg:items-center">
+            <article key={booking.id} className="grid gap-4 py-5 lg:grid-cols-[1.1fr_0.8fr_0.9fr_220px] lg:items-center">
               <div><p className="font-semibold text-[#342923]">{booking.customerName}</p><p className="mt-1 text-sm text-[#705e56]">{booking.serviceName} · {booking.customerPhone}</p>{booking.notes && <p className="mt-2 text-xs leading-5 text-[#8a756d]">“{booking.notes}”</p>}</div>
-              <div><p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Enviado em</p><p className="mt-1 text-sm font-medium text-[#5b3b35]">{formatDate(booking.createdAt)}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Atendimento</p><p className="mt-1 text-sm font-medium capitalize text-[#5b3b35]">{formatAppointmentSlot(booking.slotDate, booking.startTime, booking.endTime)}</p>{!booking.slotDate && <p className="mt-1 text-xs text-[#8a756d]">Pedido enviado em {formatDate(booking.createdAt)}</p>}</div>
               <div><Badge className={`rounded-full px-3 py-1 ${statusClass[booking.status]}`}>{statusLabel[booking.status]}</Badge></div>
-              <select aria-label={`Alterar status de ${booking.customerName}`} value={booking.status} onChange={event => updateBooking.mutate({ id: booking.id, status: event.target.value as keyof typeof statusLabel })} disabled={updateBooking.isPending} className="h-10 rounded-xl border border-[#342923]/15 bg-white px-3 text-sm text-[#5b3b35] outline-none focus:border-[#a4675d]">
-                {Object.entries(statusLabel).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-              </select>
+              <div className="flex flex-col gap-2"><select aria-label={`Alterar status de ${booking.customerName}`} value={booking.status} onChange={event => updateBooking.mutate({ id: booking.id, status: event.target.value as keyof typeof statusLabel })} disabled={updateBooking.isPending} className="h-10 rounded-xl border border-[#342923]/15 bg-white px-3 text-sm text-[#5b3b35] outline-none focus:border-[#a4675d]">
+                  {Object.entries(statusLabel).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+                </select>{booking.slotDate && booking.status !== "cancelled" && <Button asChild size="sm" variant="outline" className="h-9 rounded-full border-[#342923]/15 bg-white text-[#5b3b35] hover:bg-[#f3e4da]"><a href={whatsappConfirmationUrl(booking)} target="_blank" rel="noreferrer"><MessageCircle className="mr-1.5 h-3.5 w-3.5" />Preparar confirmação</a></Button>}</div>
             </article>
           ))}
         </div>

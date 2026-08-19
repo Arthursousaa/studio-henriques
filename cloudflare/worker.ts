@@ -103,6 +103,16 @@ type UserRow = {
   last_signed_in: string;
 };
 
+type AvailabilitySlotRow = {
+  id: number;
+  slot_date: string;
+  start_time: string;
+  end_time: string;
+  status: "available" | "blocked" | "booked";
+  created_at: string;
+  updated_at: string;
+};
+
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 const SESSION_COOKIE = "studio_henriques_session";
@@ -179,6 +189,29 @@ function toService(row: ServiceRow) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function toAvailabilitySlot(row: AvailabilitySlotRow) {
+  return {
+    id: row.id,
+    slotDate: row.slot_date,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+const slotDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe uma data válida.");
+const slotTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Informe um horário válido.");
+
+function assertSlotRange(startTime: string, endTime: string) {
+  if (startTime >= endTime) throw new TRPCError({ code: "BAD_REQUEST", message: "O horário de término deve ser posterior ao início." });
+}
+
+function formatScheduledAt(slot: Pick<AvailabilitySlotRow, "slot_date" | "start_time">) {
+  return `${slot.slot_date} ${slot.start_time}`;
 }
 
 function readCookie(request: Request, name: string) {
@@ -290,16 +323,37 @@ const appRouter = router({
   }),
   studio: router({
     services: publicProcedure.query(({ ctx }) => listServices(ctx.env)),
-    requestBooking: publicProcedure
-      .input(z.object({ serviceId: z.number().int().positive(), customerName: z.string().trim().min(2).max(120), customerPhone: z.string().trim().min(8).max(24), notes: z.string().trim().max(600).optional() }))
+    availableDates: publicProcedure.query(async ({ ctx }) => {
+      const result = await ctx.env.DB.prepare("SELECT DISTINCT slot_date FROM studio_availability_slots WHERE status = 'available' AND slot_date >= date('now', '-1 day') ORDER BY slot_date ASC LIMIT 90").all<{ slot_date: string }>();
+      return result.results.map(row => row.slot_date);
+    }),
+    availabilityForDate: publicProcedure
+      .input(z.object({ slotDate: slotDateSchema }))
+      .query(async ({ ctx, input }) => {
+        const result = await ctx.env.DB.prepare("SELECT * FROM studio_availability_slots WHERE slot_date = ? AND status = 'available' ORDER BY start_time ASC").bind(input.slotDate).all<AvailabilitySlotRow>();
+        return result.results.map(toAvailabilitySlot);
+      }),
+    scheduleBooking: publicProcedure
+      .input(z.object({ availabilitySlotId: z.number().int().positive(), serviceId: z.number().int().positive(), customerName: z.string().trim().min(2).max(120), customerPhone: z.string().trim().min(8).max(24), notes: z.string().trim().max(600).optional() }))
       .mutation(async ({ ctx, input }) => {
         await ensureServices(ctx.env);
         const service = await ctx.env.DB.prepare("SELECT id, is_active FROM studio_services WHERE id = ? LIMIT 1").bind(input.serviceId).first<{ id: number; is_active: number }>();
         if (!service || !service.is_active) throw new TRPCError({ code: "BAD_REQUEST", message: "Este serviço não está disponível no momento." });
-        await ctx.env.DB.prepare("INSERT INTO studio_bookings (service_id, customer_name, customer_phone, notes) VALUES (?, ?, ?, ?)")
-          .bind(input.serviceId, input.customerName, input.customerPhone, input.notes || null)
+        const slot = await ctx.env.DB.prepare("SELECT * FROM studio_availability_slots WHERE id = ? LIMIT 1").bind(input.availabilitySlotId).first<AvailabilitySlotRow>();
+        if (!slot || slot.status !== "available") throw new TRPCError({ code: "CONFLICT", message: "Este horário acabou de ser reservado. Escolha outro horário disponível." });
+        const reservation = await ctx.env.DB.prepare("UPDATE studio_availability_slots SET status = 'booked', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'available'")
+          .bind(input.availabilitySlotId)
           .run();
-        return { success: true } as const;
+        if ((reservation.meta.changes ?? 0) !== 1) throw new TRPCError({ code: "CONFLICT", message: "Este horário acabou de ser reservado. Escolha outro horário disponível." });
+        try {
+          await ctx.env.DB.prepare("INSERT INTO studio_bookings (service_id, availability_slot_id, customer_name, customer_phone, notes, scheduled_at, status) VALUES (?, ?, ?, ?, ?, ?, 'confirmed')")
+            .bind(input.serviceId, input.availabilitySlotId, input.customerName, input.customerPhone, input.notes || null, formatScheduledAt(slot))
+            .run();
+        } catch (error) {
+          await ctx.env.DB.prepare("UPDATE studio_availability_slots SET status = 'available', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'booked'").bind(input.availabilitySlotId).run();
+          throw error;
+        }
+        return { success: true, slotDate: slot.slot_date, startTime: slot.start_time, endTime: slot.end_time } as const;
       }),
   }),
   admin: router({
@@ -313,13 +367,56 @@ const appRouter = router({
           .run();
         return { success: true } as const;
       }),
+    availability: adminProcedure.query(async ({ ctx }) => {
+      const result = await ctx.env.DB.prepare("SELECT * FROM studio_availability_slots WHERE slot_date >= date('now', '-1 day') ORDER BY slot_date ASC, start_time ASC LIMIT 300").all<AvailabilitySlotRow>();
+      return result.results.map(toAvailabilitySlot);
+    }),
+    createAvailability: adminProcedure
+      .input(z.object({ slotDate: slotDateSchema, startTime: slotTimeSchema, endTime: slotTimeSchema }))
+      .mutation(async ({ ctx, input }) => {
+        assertSlotRange(input.startTime, input.endTime);
+        try {
+          await ctx.env.DB.prepare("INSERT INTO studio_availability_slots (slot_date, start_time, end_time, status) VALUES (?, ?, ?, 'available')")
+            .bind(input.slotDate, input.startTime, input.endTime)
+            .run();
+        } catch {
+          throw new TRPCError({ code: "CONFLICT", message: "Já existe um horário cadastrado nesse início. Escolha outro horário ou edite o existente." });
+        }
+        return { success: true } as const;
+      }),
+    updateAvailability: adminProcedure
+      .input(z.object({ id: z.number().int().positive(), status: z.enum(["available", "blocked"]) }))
+      .mutation(async ({ ctx, input }) => {
+        const update = await ctx.env.DB.prepare("UPDATE studio_availability_slots SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status != 'booked'")
+          .bind(input.status, input.id)
+          .run();
+        if ((update.meta.changes ?? 0) !== 1) throw new TRPCError({ code: "BAD_REQUEST", message: "Horários já reservados só podem ser liberados ao cancelar o atendimento correspondente." });
+        return { success: true } as const;
+      }),
+    deleteAvailability: adminProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        const deletion = await ctx.env.DB.prepare("DELETE FROM studio_availability_slots WHERE id = ? AND status != 'booked'").bind(input.id).run();
+        if ((deletion.meta.changes ?? 0) !== 1) throw new TRPCError({ code: "BAD_REQUEST", message: "Não é possível excluir um horário já reservado." });
+        return { success: true } as const;
+      }),
     bookings: adminProcedure.query(async ({ ctx }) => {
-      const result = await ctx.env.DB.prepare("SELECT b.id, b.customer_name AS customerName, b.customer_phone AS customerPhone, b.notes, b.scheduled_at AS scheduledAt, b.status, b.created_at AS createdAt, s.name AS serviceName FROM studio_bookings b INNER JOIN studio_services s ON s.id = b.service_id ORDER BY b.created_at DESC").all();
+      const result = await ctx.env.DB.prepare("SELECT b.id, b.customer_name AS customerName, b.customer_phone AS customerPhone, b.notes, b.scheduled_at AS scheduledAt, b.status, b.created_at AS createdAt, s.name AS serviceName, a.slot_date AS slotDate, a.start_time AS startTime, a.end_time AS endTime FROM studio_bookings b INNER JOIN studio_services s ON s.id = b.service_id LEFT JOIN studio_availability_slots a ON a.id = b.availability_slot_id ORDER BY CASE WHEN a.slot_date IS NULL THEN 1 ELSE 0 END, a.slot_date ASC, a.start_time ASC, b.created_at DESC").all();
       return result.results;
     }),
     updateBookingStatus: adminProcedure
       .input(z.object({ id: z.number().int().positive(), status: z.enum(["requested", "confirmed", "completed", "cancelled"]) }))
       .mutation(async ({ ctx, input }) => {
+        const booking = await ctx.env.DB.prepare("SELECT availability_slot_id, status FROM studio_bookings WHERE id = ? LIMIT 1").bind(input.id).first<{ availability_slot_id: number | null; status: "requested" | "confirmed" | "completed" | "cancelled" }>();
+        if (!booking) throw new TRPCError({ code: "NOT_FOUND", message: "Agendamento não encontrado." });
+        if (booking.availability_slot_id && booking.status !== input.status) {
+          if (input.status === "cancelled") {
+            await ctx.env.DB.prepare("UPDATE studio_availability_slots SET status = 'available', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'booked'").bind(booking.availability_slot_id).run();
+          } else if (booking.status === "cancelled") {
+            const reservation = await ctx.env.DB.prepare("UPDATE studio_availability_slots SET status = 'booked', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'available'").bind(booking.availability_slot_id).run();
+            if ((reservation.meta.changes ?? 0) !== 1) throw new TRPCError({ code: "CONFLICT", message: "Este horário não está mais disponível para reativar o atendimento." });
+          }
+        }
         await ctx.env.DB.prepare("UPDATE studio_bookings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(input.status, input.id).run();
         return { success: true } as const;
       }),

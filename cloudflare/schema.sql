@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS studio_services (
 CREATE TABLE IF NOT EXISTS studio_bookings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   service_id INTEGER NOT NULL,
+  availability_slot_id INTEGER,
   customer_name TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
   notes TEXT,
@@ -36,8 +37,22 @@ CREATE TABLE IF NOT EXISTS studio_bookings (
   status TEXT NOT NULL DEFAULT 'requested' CHECK (status IN ('requested', 'confirmed', 'completed', 'cancelled')),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (service_id) REFERENCES studio_services(id)
+  FOREIGN KEY (service_id) REFERENCES studio_services(id),
+  FOREIGN KEY (availability_slot_id) REFERENCES studio_availability_slots(id)
+);
+
+CREATE TABLE IF NOT EXISTS studio_availability_slots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  slot_date TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  end_time TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'blocked', 'booked')),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(slot_date, start_time)
 );
 
 CREATE INDEX IF NOT EXISTS idx_studio_bookings_created_at ON studio_bookings(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_studio_services_active_order ON studio_services(is_active, sort_order);
+CREATE INDEX IF NOT EXISTS idx_studio_availability_slots_date_status ON studio_availability_slots(slot_date, status, start_time);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_studio_bookings_availability_slot ON studio_bookings(availability_slot_id) WHERE availability_slot_id IS NOT NULL;

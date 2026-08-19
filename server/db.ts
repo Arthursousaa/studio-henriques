@@ -1,7 +1,8 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
+  studioAvailabilitySlots,
   studioBookings,
   studioServices,
   users,
@@ -206,6 +207,72 @@ export async function createStudioBooking(values: {
   });
 }
 
+type AvailabilityStatus = "available" | "blocked" | "booked";
+
+export async function listStudioAvailability() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(studioAvailabilitySlots).orderBy(asc(studioAvailabilitySlots.slotDate), asc(studioAvailabilitySlots.startTime));
+}
+
+export async function listAvailableStudioDates() {
+  const slots = await listStudioAvailability();
+  return Array.from(new Set(slots.filter(slot => slot.status === "available").map(slot => slot.slotDate)));
+}
+
+export async function listAvailableStudioAvailabilityForDate(slotDate: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(studioAvailabilitySlots)
+    .where(and(eq(studioAvailabilitySlots.slotDate, slotDate), eq(studioAvailabilitySlots.status, "available")))
+    .orderBy(asc(studioAvailabilitySlots.startTime));
+}
+
+export async function createStudioAvailability(values: { slotDate: string; startTime: string; endTime: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível");
+  await db.insert(studioAvailabilitySlots).values({ ...values, status: "available" });
+}
+
+export async function updateStudioAvailability(id: number, status: Exclude<AvailabilityStatus, "booked">) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível");
+  await db.update(studioAvailabilitySlots).set({ status }).where(and(eq(studioAvailabilitySlots.id, id), ne(studioAvailabilitySlots.status, "booked")));
+}
+
+export async function deleteStudioAvailability(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível");
+  await db.delete(studioAvailabilitySlots).where(and(eq(studioAvailabilitySlots.id, id), ne(studioAvailabilitySlots.status, "booked")));
+}
+
+export async function scheduleStudioBooking(values: {
+  availabilitySlotId: number;
+  serviceId: number;
+  customerName: string;
+  customerPhone: string;
+  notes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível");
+  const slots = await db.select().from(studioAvailabilitySlots)
+    .where(and(eq(studioAvailabilitySlots.id, values.availabilitySlotId), eq(studioAvailabilitySlots.status, "available")))
+    .limit(1);
+  const slot = slots[0];
+  if (!slot) return undefined;
+  await db.update(studioAvailabilitySlots).set({ status: "booked" }).where(and(eq(studioAvailabilitySlots.id, values.availabilitySlotId), eq(studioAvailabilitySlots.status, "available")));
+  await db.insert(studioBookings).values({
+    serviceId: values.serviceId,
+    availabilitySlotId: values.availabilitySlotId,
+    customerName: values.customerName,
+    customerPhone: values.customerPhone,
+    notes: values.notes || null,
+    scheduledAt: new Date(`${slot.slotDate}T${slot.startTime}:00`),
+    status: "confirmed",
+  });
+  return slot;
+}
+
 export async function listStudioBookings() {
   const db = await getDb();
   if (!db) return [];
@@ -219,9 +286,13 @@ export async function listStudioBookings() {
       status: studioBookings.status,
       createdAt: studioBookings.createdAt,
       serviceName: studioServices.name,
+      slotDate: studioAvailabilitySlots.slotDate,
+      startTime: studioAvailabilitySlots.startTime,
+      endTime: studioAvailabilitySlots.endTime,
     })
     .from(studioBookings)
     .innerJoin(studioServices, eq(studioBookings.serviceId, studioServices.id))
+    .leftJoin(studioAvailabilitySlots, eq(studioBookings.availabilitySlotId, studioAvailabilitySlots.id))
     .orderBy(desc(studioBookings.createdAt));
 }
 
@@ -231,6 +302,15 @@ export async function updateStudioBookingStatus(
 ) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível");
+  const bookings = await db.select().from(studioBookings).where(eq(studioBookings.id, id)).limit(1);
+  const booking = bookings[0];
+  if (booking?.availabilitySlotId && booking.status !== status) {
+    if (status === "cancelled") {
+      await db.update(studioAvailabilitySlots).set({ status: "available" }).where(eq(studioAvailabilitySlots.id, booking.availabilitySlotId));
+    } else if (booking.status === "cancelled") {
+      await db.update(studioAvailabilitySlots).set({ status: "booked" }).where(and(eq(studioAvailabilitySlots.id, booking.availabilitySlotId), eq(studioAvailabilitySlots.status, "available")));
+    }
+  }
   await db.update(studioBookings).set({ status }).where(eq(studioBookings.id, id));
 }
 

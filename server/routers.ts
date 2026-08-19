@@ -4,17 +4,31 @@ import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import {
+  createStudioAvailability,
   createStudioBooking,
+  deleteStudioAvailability,
   getStudioService,
+  listAvailableStudioAvailabilityForDate,
+  listAvailableStudioDates,
+  listStudioAvailability,
   listStudioBookings,
   listStudioServices,
   listStudioUsers,
+  scheduleStudioBooking,
   updateStudioBookingStatus,
+  updateStudioAvailability,
   updateStudioService,
   updateStudioUserRole,
 } from "./db";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { ENV } from "./_core/env";
+
+const slotDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const slotTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+
+function assertSlotRange(startTime: string, endTime: string) {
+  if (startTime >= endTime) throw new TRPCError({ code: "BAD_REQUEST", message: "O horário de término deve ser posterior ao início." });
+}
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -31,6 +45,17 @@ export const appRouter = router({
   }),
   studio: router({
     services: publicProcedure.query(() => listStudioServices()),
+    availableDates: publicProcedure.query(() => listAvailableStudioDates()),
+    availabilityForDate: publicProcedure.input(z.object({ slotDate: slotDateSchema })).query(({ input }) => listAvailableStudioAvailabilityForDate(input.slotDate)),
+    scheduleBooking: publicProcedure
+      .input(z.object({ availabilitySlotId: z.number().int().positive(), serviceId: z.number().int().positive(), customerName: z.string().trim().min(2).max(120), customerPhone: z.string().trim().min(8).max(24), notes: z.string().trim().max(600).optional() }))
+      .mutation(async ({ input }) => {
+        const service = await getStudioService(input.serviceId);
+        if (!service || !service.isActive) throw new TRPCError({ code: "BAD_REQUEST", message: "Este serviço não está disponível no momento." });
+        const slot = await scheduleStudioBooking(input);
+        if (!slot) throw new TRPCError({ code: "CONFLICT", message: "Este horário acabou de ser reservado. Escolha outro horário disponível." });
+        return { success: true, slotDate: slot.slotDate, startTime: slot.startTime, endTime: slot.endTime } as const;
+      }),
     requestBooking: publicProcedure
       .input(
         z.object({
@@ -72,6 +97,26 @@ export const appRouter = router({
           isPriceOnRequest: input.isPriceOnRequest,
           isActive: input.isActive,
         });
+        return { success: true } as const;
+      }),
+    availability: adminProcedure.query(() => listStudioAvailability()),
+    createAvailability: adminProcedure
+      .input(z.object({ slotDate: slotDateSchema, startTime: slotTimeSchema, endTime: slotTimeSchema }))
+      .mutation(async ({ input }) => {
+        assertSlotRange(input.startTime, input.endTime);
+        await createStudioAvailability(input);
+        return { success: true } as const;
+      }),
+    updateAvailability: adminProcedure
+      .input(z.object({ id: z.number().int().positive(), status: z.enum(["available", "blocked"]) }))
+      .mutation(async ({ input }) => {
+        await updateStudioAvailability(input.id, input.status);
+        return { success: true } as const;
+      }),
+    deleteAvailability: adminProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await deleteStudioAvailability(input.id);
         return { success: true } as const;
       }),
     bookings: adminProcedure.query(() => listStudioBookings()),

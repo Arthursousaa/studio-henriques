@@ -1,9 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const dbMocks = vi.hoisted(() => ({
+  createStudioAvailability: vi.fn(),
   listStudioServices: vi.fn(),
+  listAvailableStudioDates: vi.fn(),
+  listAvailableStudioAvailabilityForDate: vi.fn(),
+  listStudioAvailability: vi.fn(),
   getStudioService: vi.fn(),
   createStudioBooking: vi.fn(),
+  scheduleStudioBooking: vi.fn(),
+  updateStudioAvailability: vi.fn(),
+  deleteStudioAvailability: vi.fn(),
   updateStudioService: vi.fn(),
   listStudioBookings: vi.fn(),
   updateStudioBookingStatus: vi.fn(),
@@ -89,6 +96,25 @@ describe("Studio Henriques core flows", () => {
     });
   });
 
+  it("lists only dates and times that are currently available", async () => {
+    dbMocks.listAvailableStudioDates.mockResolvedValue(["2026-08-20"]);
+    dbMocks.listAvailableStudioAvailabilityForDate.mockResolvedValue([{ id: 44, slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00", status: "available" }]);
+    const caller = appRouter.createCaller(createContext(null));
+
+    await expect(caller.studio.availableDates()).resolves.toEqual(["2026-08-20"]);
+    await expect(caller.studio.availabilityForDate({ slotDate: "2026-08-20" })).resolves.toEqual([{ id: 44, slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00", status: "available" }]);
+  });
+
+  it("confirms a valid reservation and rejects a slot that has just become unavailable", async () => {
+    dbMocks.getStudioService.mockResolvedValue(activeService);
+    dbMocks.scheduleStudioBooking.mockResolvedValueOnce({ slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00" }).mockResolvedValueOnce(undefined);
+    const caller = appRouter.createCaller(createContext(null));
+    const booking = { availabilitySlotId: 44, serviceId: activeService.id, customerName: "Ana Silva", customerPhone: "11999999999", notes: "" };
+
+    await expect(caller.studio.scheduleBooking(booking)).resolves.toEqual({ success: true, slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00" });
+    await expect(caller.studio.scheduleBooking(booking)).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
   it("lets the administrator update a service price and availability", async () => {
     dbMocks.updateStudioService.mockResolvedValue(undefined);
     const caller = appRouter.createCaller(createContext("admin"));
@@ -102,6 +128,26 @@ describe("Studio Henriques core flows", () => {
       isPriceOnRequest: false,
       isActive: false,
     });
+  });
+
+  it("lets the administrator add a valid availability slot and rejects an invalid time range", async () => {
+    dbMocks.createStudioAvailability.mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("admin"));
+
+    await expect(caller.admin.createAvailability({ slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00" })).resolves.toEqual({ success: true });
+    expect(dbMocks.createStudioAvailability).toHaveBeenCalledWith({ slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00" });
+    await expect(caller.admin.createAvailability({ slotDate: "2026-08-20", startTime: "11:00", endTime: "10:00" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("lets the administrator block a free slot or remove it from the public calendar", async () => {
+    dbMocks.updateStudioAvailability.mockResolvedValue(undefined);
+    dbMocks.deleteStudioAvailability.mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("admin"));
+
+    await expect(caller.admin.updateAvailability({ id: 44, status: "blocked" })).resolves.toEqual({ success: true });
+    await expect(caller.admin.deleteAvailability({ id: 45 })).resolves.toEqual({ success: true });
+    expect(dbMocks.updateStudioAvailability).toHaveBeenCalledWith(44, "blocked");
+    expect(dbMocks.deleteStudioAvailability).toHaveBeenCalledWith(45);
   });
 
   it("lets the administrator mark a service as priced on request", async () => {

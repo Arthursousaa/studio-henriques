@@ -55,9 +55,26 @@ export const studioBookingStatus = mysqlEnum("studio_booking_status", [
   "cancelled",
 ]);
 
+export const studioAvailabilityStatus = mysqlEnum("studio_availability_status", [
+  "available",
+  "blocked",
+  "booked",
+]);
+
+export const studioAvailabilitySlots = mysqlTable("studio_availability_slots", {
+  id: int("id").autoincrement().primaryKey(),
+  slotDate: varchar("slotDate", { length: 10 }).notNull(),
+  startTime: varchar("startTime", { length: 5 }).notNull(),
+  endTime: varchar("endTime", { length: 5 }).notNull(),
+  status: studioAvailabilityStatus.notNull().default("available"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const studioBookings = mysqlTable("studio_bookings", {
   id: int("id").autoincrement().primaryKey(),
   serviceId: int("serviceId").notNull(),
+  availabilitySlotId: int("availabilitySlotId"),
   customerName: varchar("customerName", { length: 120 }).notNull(),
   customerPhone: varchar("customerPhone", { length: 24 }).notNull(),
   notes: text("notes"),
@@ -69,3 +86,4 @@ export const studioBookings = mysqlTable("studio_bookings", {
 
 export type StudioService = typeof studioServices.$inferSelect;
 export type StudioBooking = typeof studioBookings.$inferSelect;
+export type StudioAvailabilitySlot = typeof studioAvailabilitySlots.$inferSelect;

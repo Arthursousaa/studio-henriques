@@ -4,7 +4,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { services, requestInformation } = vi.hoisted(() => ({
+const { services, requestInformation, availableDates, availableSlots } = vi.hoisted(() => ({
   services: [
     { id: 11, slug: "massagem-ventosa", name: "Massagem com ventosa", category: "Massagem", description: "Alívio e bem-estar.", price: "90.00", isPriceOnRequest: false },
     { id: 12, slug: "massagem-relaxante", name: "Massagem relaxante", category: "Massagem", description: "Pausa para o corpo.", price: "80.00", isPriceOnRequest: false },
@@ -12,13 +12,17 @@ const { services, requestInformation } = vi.hoisted(() => ({
     { id: 14, slug: "axila", name: "Axila", category: "Depilação", description: "Escolha o método de sua preferência.", price: "30.00", isPriceOnRequest: false },
   ],
   requestInformation: vi.fn(),
+  availableDates: ["2026-08-20", "2026-08-21"],
+  availableSlots: [{ id: 50, slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00", status: "available" }],
 }));
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     studio: {
       services: { useQuery: () => ({ data: services, isLoading: false }) },
-      requestBooking: { useMutation: () => ({ mutate: requestInformation, isPending: false }) },
+      availableDates: { useQuery: () => ({ data: availableDates, isLoading: false, refetch: vi.fn() }) },
+      availabilityForDate: { useQuery: () => ({ data: availableSlots, isLoading: false, refetch: vi.fn() }) },
+      scheduleBooking: { useMutation: () => ({ mutate: requestInformation, isPending: false }) },
     },
   },
 }));

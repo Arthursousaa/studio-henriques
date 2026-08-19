@@ -42,10 +42,10 @@
 - [x] Configurar o repositório para publicar a versão estática gratuitamente no GitHub Pages.
 - [x] Aproximar visual, seções, navegação e fluxos públicos da versão estática do GitHub Pages à experiência do site completo.
 - [x] Definir uma hospedagem compatível com servidor, banco de dados, autenticação e painel administrativo, mantendo o GitHub como repositório do código.
-- [ ] Preparar e publicar fora do GitHub Pages uma versão completa com edição de preços, pedidos salvos e controle de administradoras.
+- [x] Preparar e publicar fora do GitHub Pages uma versão completa com edição de preços, pedidos salvos e controle de administradoras.
 - [ ] Validar o acesso público e a administração na nova hospedagem completa.
 - [x] Conectar a conta Cloudflare da proprietária e provisionar os recursos para a migração completa.
-- [ ] Adaptar a aplicação, o banco e a autenticação para Cloudflare Workers e D1, preservando o painel administrativo.
+- [x] Adaptar a aplicação, o banco e a autenticação para Cloudflare Workers e D1, preservando o painel administrativo.
 - [x] Configurar publicação contínua do site completo pelo repositório GitHub na Cloudflare.
 - [x] Conectar uma credencial Cloudflare ativa e com permissão de escrita no D1 para a conta da proprietária.
 - [x] Validar a permissão de escrita em Workers antes de publicar a aplicação completa.
@@ -64,3 +64,11 @@
 - [x] Reorganizar o catálogo para abrir opções relacionadas depois que a cliente selecionar um serviço ou categoria.
 - [x] Separar a depilação por cera e laser usando somente serviços, áreas e preços confirmados pela proprietária.
 - [x] Mostrar as mesmas áreas de depilação em Cera e Laser, identificando o método escolhido antes do pedido de informações.
+- [x] Confirmar que o endereço Cloudflare está exibindo a última versão publicada do catálogo por etapas.
+- [x] Definir o fluxo de reserva com serviço, data, horário e dados da cliente.
+- [x] Criar estrutura de agenda para disponibilizar, bloquear e reservar horários sem conflito.
+- [x] Adicionar ao painel administrativo os controles para a proprietária abrir e ajustar datas e horários disponíveis.
+- [x] Criar o calendário público que mostra apenas horários livres e bloqueia horários já reservados.
+- [ ] Implementar confirmação de agendamento por WhatsApp com provedor oficial e configuração segura das credenciais.
+- [ ] Validar em produção a agenda, a prevenção de dupla reserva e as confirmações antes de ativar o envio real.
+- [x] Implementar confirmação gratuita na tela após a reserva e opção de abrir uma conversa do Studio no WhatsApp com dados pré-preenchidos, sem envio automático.

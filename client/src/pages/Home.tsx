@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +31,8 @@ type InfoRequestForm = {
   customerPhone: string;
   notes: string;
   depilationMethod: "" | "Cera" | "Laser";
+  slotDate: string;
+  availabilitySlotId: string;
 };
 
 export type PublicStudioService = {
@@ -48,9 +51,29 @@ const initialForm: InfoRequestForm = {
   customerPhone: "",
   notes: "",
   depilationMethod: "",
+  slotDate: "",
+  availabilitySlotId: "",
 };
 
 type DepilationMethod = Exclude<InfoRequestForm["depilationMethod"], "">;
+
+type ReservationConfirmation = {
+  serviceName: string;
+  customerName: string;
+  slotDate: string;
+  startTime: string;
+  endTime: string;
+};
+
+function dateKey(date: Date) {
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+}
+
+function formatAppointment(slotDate: string, startTime: string, endTime: string) {
+  const date = new Date(`${slotDate}T${startTime}:00`);
+  const label = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(date);
+  return `${label} às ${startTime}${endTime ? ` até ${endTime}` : ""}`;
+}
 
 function ServiceIcon({ slug }: { slug: string }) {
   const className = "h-5 w-5";
@@ -94,15 +117,14 @@ export function PublicServiceOptions({ services, depilationMethod }: { services:
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState<InfoRequestForm>(initialForm);
+  const [reservationConfirmation, setReservationConfirmation] = useState<ReservationConfirmation | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedDepilationMethod, setSelectedDepilationMethod] = useState<DepilationMethod | "">("");
   const servicesQuery = trpc.studio.services.useQuery();
-  const createBooking = trpc.studio.requestBooking.useMutation({
-    onSuccess: () => {
-      toast.success("Pedido enviado! Em breve o Studio Henriques entrará em contato.");
-      setForm(initialForm);
-    },
-    onError: error => toast.error(error.message || "Não foi possível registrar o pedido."),
+  const availableDatesQuery = trpc.studio.availableDates.useQuery();
+  const availabilityForDateQuery = trpc.studio.availabilityForDate.useQuery({ slotDate: form.slotDate }, { enabled: Boolean(form.slotDate) });
+  const createBooking = trpc.studio.scheduleBooking.useMutation({
+    onError: error => toast.error(error.message || "Não foi possível concluir o agendamento."),
   });
 
   const services = servicesQuery.data ?? [];
@@ -112,6 +134,8 @@ export default function Home() {
   );
   const serviceCategories = useMemo(() => getServiceCategories(services).filter(category => category !== "Todos"), [services]);
   const filteredServices = useMemo(() => selectedCategory ? filterServicesByCategory(services, selectedCategory) : [], [services, selectedCategory]);
+  const availableDateKeys = availableDatesQuery.data ?? [];
+  const availableCalendarDates = useMemo(() => availableDateKeys.map(value => new Date(`${value}T12:00:00`)), [availableDateKeys]);
 
   function scrollToBooking() {
     document.querySelector("#agendar")?.scrollIntoView({ behavior: "smooth" });
@@ -124,8 +148,8 @@ export default function Home() {
 
   function handleBooking(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedService || !form.customerName || !form.customerPhone) {
-      toast.error("Preencha seu nome, WhatsApp e serviço para enviar o pedido.");
+    if (!selectedService || !form.customerName || !form.customerPhone || !form.slotDate || !form.availabilitySlotId) {
+      toast.error("Escolha o serviço, a data, o horário e preencha seu nome e WhatsApp.");
       return;
     }
 
@@ -135,10 +159,25 @@ export default function Home() {
     }
 
     createBooking.mutate({
+      availabilitySlotId: Number(form.availabilitySlotId),
       serviceId: selectedService.id,
       customerName: form.customerName,
       customerPhone: form.customerPhone,
       notes: buildInfoRequestNotes(form.notes, form["depilationMethod"] || undefined),
+    }, {
+      onSuccess: result => {
+        setReservationConfirmation({
+          serviceName: selectedService.name + (selectedService.category === "Depilação" && form.depilationMethod ? ` (${form.depilationMethod})` : ""),
+          customerName: form.customerName,
+          slotDate: result.slotDate,
+          startTime: result.startTime,
+          endTime: result.endTime,
+        });
+        setForm(initialForm);
+        void availableDatesQuery.refetch();
+        void availabilityForDateQuery.refetch();
+        toast.success("Seu horário foi reservado.");
+      },
     });
   }
 
@@ -148,6 +187,7 @@ export default function Home() {
   }
 
   function selectService(id: number, depilationMethod: DepilationMethod | "" = "") {
+    setReservationConfirmation(null);
     setForm(current => selectServiceForInfoRequest(current, id, { depilationMethod }));
     scrollToBooking();
   }
@@ -224,7 +264,7 @@ export default function Home() {
 
         <section className="border-y border-[#342923]/10 bg-[#f5ede5]">
           <div className="container grid divide-y divide-[#342923]/10 py-3 text-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:py-0">
-            <div className="flex items-center gap-3 py-4 sm:justify-center"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><span>Agendamento simples pelo WhatsApp</span></div>
+            <div className="flex items-center gap-3 py-4 sm:justify-center"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><span>Agenda online com horários disponíveis</span></div>
             <div className="flex items-center gap-3 py-4 sm:justify-center"><Clock3 className="h-4 w-4 text-[#a4675d]" /><span>Atendimento com hora marcada</span></div>
             <div className="flex items-center gap-3 py-4 sm:justify-center"><Check className="h-4 w-4 text-[#a4675d]" /><span>Preços sempre atualizados</span></div>
           </div>
@@ -320,23 +360,25 @@ export default function Home() {
           <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,_#f1ddd1_0%,_transparent_72%)]" />
           <div className="container relative grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
             <div className="lg:pt-8">
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#a4675d]">Mais informações</p>
-              <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Vamos conversar sobre o seu cuidado?</h2>
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#a4675d]">Agende seu atendimento</p>
+              <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Escolha o seu melhor momento.</h2>
               <p className="mt-6 max-w-md text-base leading-7 text-[#705e56]">
-                Escolha um serviço, conte o que você precisa e deixe seu WhatsApp. A Jaqueline retornará para esclarecer dúvidas e combinar o melhor horário.
+                Escolha o serviço, veja os dias liberados pela Jaqueline e reserve um horário que esteja disponível. Assim que concluir, ele fica reservado somente para você.
               </p>
               <div className="mt-8 rounded-2xl border border-[#d7b9aa] bg-[#fffaf2] p-5 text-sm leading-6 text-[#6c5048]">
-                <div className="mb-2 flex items-center gap-2 font-semibold text-[#5b3b35]"><MessageCircle className="h-4 w-4" /> Atendimento personalizado</div>
-                Seu pedido é enviado para o Studio Henriques. A confirmação de horário e os detalhes são combinados diretamente com você.
+                <div className="mb-2 flex items-center gap-2 font-semibold text-[#5b3b35]"><Check className="h-4 w-4" /> Reserva protegida</div>
+                Apenas horários liberados aparecem no calendário. Quando uma cliente finaliza a reserva, aquele horário deixa de ficar disponível para outras pessoas.
               </div>
             </div>
 
             <form onSubmit={handleBooking} className="rounded-[1.75rem] border border-[#342923]/10 bg-[#fffdf9] p-6 shadow-[0_25px_60px_-40px_rgba(60,37,30,0.55)] sm:p-8">
+              {reservationConfirmation && <div className="mb-6 rounded-2xl border border-[#a8caa8] bg-[#eff7ed] p-5 text-[#315d37]"><div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#d3e9d0]"><Check className="h-5 w-5" /></span><div><p className="font-semibold">Agendamento reservado, {reservationConfirmation.customerName}.</p><p className="mt-1 text-sm leading-6">{reservationConfirmation.serviceName} · <span className="capitalize">{formatAppointment(reservationConfirmation.slotDate, reservationConfirmation.startTime, reservationConfirmation.endTime)}</span></p><p className="mt-2 text-xs leading-5">A Jaqueline terá seus dados no painel e poderá confirmar os detalhes pelo WhatsApp informado.</p></div></div></div>}
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="service" className="text-sm font-semibold">Qual serviço você deseja?</Label>
                   <select id="service" value={form.serviceId} onChange={event => {
                     const nextService = services.find(service => service.id === Number(event.target.value));
+                    setReservationConfirmation(null);
                     setForm(current => ({ ...current, serviceId: event.target.value, depilationMethod: nextService?.category === "Depilação" ? current["depilationMethod"] : "" }));
                   }} className="mt-2 h-11 w-full rounded-xl border border-[#342923]/15 bg-white px-3 text-sm outline-none transition focus:border-[#a4675d] focus:ring-2 focus:ring-[#dcb4a4]/40">
                     <option value="">Selecione um serviço</option>
@@ -354,6 +396,20 @@ export default function Home() {
                     {form["depilationMethod"] === "Laser" && <p className="mt-2 text-xs leading-5 text-[#705e56]">Os valores de depilação a laser são informados pelo Studio conforme a área e a disponibilidade.</p>}
                   </div>
                 )}
+                <div className="sm:col-span-2">
+                  <Label className="text-sm font-semibold">Escolha uma data disponível</Label>
+                  {availableDatesQuery.isLoading && <p className="mt-2 text-sm text-[#705e56]">Carregando calendário...</p>}
+                  {!availableDatesQuery.isLoading && availableDateKeys.length === 0 && <div className="mt-2 rounded-xl border border-dashed border-[#342923]/15 bg-[#f8f2ec] p-4 text-sm leading-6 text-[#705e56]">Ainda não há datas abertas para reserva. Volte em breve ou fale diretamente com o Studio.</div>}
+                  {availableDateKeys.length > 0 && <div className="mt-2 overflow-hidden rounded-2xl border border-[#342923]/10 bg-[#fdfaf7] p-1"><Calendar mode="single" selected={form.slotDate ? new Date(`${form.slotDate}T12:00:00`) : undefined} onSelect={date => setForm(current => ({ ...current, slotDate: date ? dateKey(date) : "", availabilitySlotId: "" }))} disabled={date => dateKey(date) < dateKey(new Date()) || !availableDateKeys.includes(dateKey(date))} modifiers={{ available: availableCalendarDates }} modifiersClassNames={{ available: "font-semibold text-[#5b3b35]" }} className="mx-auto bg-transparent" /></div>}
+                  {form.slotDate && <p className="mt-2 text-xs font-medium capitalize text-[#5b3b35]">Data escolhida: {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(new Date(`${form.slotDate}T12:00:00`))}</p>}
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="text-sm font-semibold">Escolha o horário</Label>
+                  {!form.slotDate && <p className="mt-2 text-sm text-[#705e56]">Primeiro escolha uma data disponível no calendário.</p>}
+                  {form.slotDate && availabilityForDateQuery.isLoading && <p className="mt-2 text-sm text-[#705e56]">Carregando horários...</p>}
+                  {form.slotDate && !availabilityForDateQuery.isLoading && (availabilityForDateQuery.data?.length ?? 0) === 0 && <p className="mt-2 rounded-xl border border-dashed border-[#342923]/15 bg-[#f8f2ec] p-4 text-sm text-[#705e56]">Os horários desta data já foram reservados. Selecione outra data.</p>}
+                  {(availabilityForDateQuery.data?.length ?? 0) > 0 && <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">{availabilityForDateQuery.data?.map(slot => <button type="button" key={slot.id} onClick={() => setForm(current => ({ ...current, availabilitySlotId: String(slot.id) }))} className={`h-11 rounded-xl border text-sm font-semibold transition ${form.availabilitySlotId === String(slot.id) ? "border-[#5b3b35] bg-[#5b3b35] text-[#fffaf2]" : "border-[#342923]/15 bg-white text-[#705e56] hover:border-[#a4675d]/50 hover:text-[#5b3b35]"}`}>{slot.startTime}</button>)}</div>}
+                </div>
                 <div>
                   <Label htmlFor="customerName" className="text-sm font-semibold">Seu nome</Label>
                   <Input id="customerName" value={form.customerName} onChange={event => updateForm("customerName", event.target.value)} placeholder="Como podemos te chamar?" className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
@@ -363,14 +419,14 @@ export default function Home() {
                   <Input id="customerPhone" type="tel" value={form.customerPhone} onChange={event => updateForm("customerPhone", event.target.value)} placeholder="(11) 99999-9999" className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
                 </div>
                 <div className="sm:col-span-2">
-                  <Label htmlFor="notes" className="text-sm font-semibold">Como podemos ajudar? <span className="font-normal text-[#705e56]">(opcional)</span></Label>
-                  <Textarea id="notes" value={form.notes} onChange={event => updateForm("notes", event.target.value)} maxLength={600} placeholder="Conte qual informação você gostaria de receber." className="mt-2 min-h-24 resize-y rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
+                  <Label htmlFor="notes" className="text-sm font-semibold">Algum recado para a Jaqueline? <span className="font-normal text-[#705e56]">(opcional)</span></Label>
+                  <Textarea id="notes" value={form.notes} onChange={event => updateForm("notes", event.target.value)} maxLength={600} placeholder="Conte qualquer detalhe que a Jaqueline deve saber." className="mt-2 min-h-24 resize-y rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
                 </div>
               </div>
-              <Button type="submit" disabled={createBooking.isPending || servicesQuery.isLoading} className="mt-7 h-12 w-full rounded-full bg-[#5b3b35] text-sm font-semibold text-[#fffaf2] hover:bg-[#754d45] active:scale-[0.98]">
-                <MessageCircle className="mr-2 h-4 w-4" /> {createBooking.isPending ? "Enviando pedido..." : "Enviar pedido de informações"}
+              <Button type="submit" disabled={createBooking.isPending || servicesQuery.isLoading || availableDatesQuery.isLoading} className="mt-7 h-12 w-full rounded-full bg-[#5b3b35] text-sm font-semibold text-[#fffaf2] hover:bg-[#754d45] active:scale-[0.98]">
+                <CalendarDays className="mr-2 h-4 w-4" /> {createBooking.isPending ? "Reservando horário..." : "Confirmar agendamento"}
               </Button>
-              <p className="mt-3 text-center text-xs leading-5 text-[#8a756d]">O Studio Henriques entrará em contato pelo WhatsApp informado.</p>
+              <p className="mt-3 text-center text-xs leading-5 text-[#8a756d]">Ao confirmar, este horário será reservado e deixará de aparecer para outras clientes.</p>
             </form>
           </div>
         </section>
