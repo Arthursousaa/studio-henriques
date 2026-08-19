@@ -398,13 +398,15 @@ export default function Home() {
                 )}
                 <div className="sm:col-span-2">
                   <Label className="text-sm font-semibold">Escolha uma data disponível</Label>
+                  <p className="mt-1 text-xs leading-5 text-[#705e56]">O calendário mostra apenas os dias em que o Studio estará funcionando.</p>
                   {availableDatesQuery.isLoading && <p className="mt-2 text-sm text-[#705e56]">Carregando calendário...</p>}
-                  {!availableDatesQuery.isLoading && availableDateKeys.length === 0 && <div className="mt-2 rounded-xl border border-dashed border-[#342923]/15 bg-[#f8f2ec] p-4 text-sm leading-6 text-[#705e56]">Ainda não há datas abertas para reserva. Volte em breve ou fale diretamente com o Studio.</div>}
+                  {!availableDatesQuery.isLoading && availableDateKeys.length === 0 && <div className="mt-2 rounded-xl border border-dashed border-[#342923]/15 bg-[#f8f2ec] p-4 text-sm leading-6 text-[#705e56]">A agenda ainda não foi aberta para novas reservas. Volte em breve ou fale diretamente com o Studio.</div>}
                   {availableDateKeys.length > 0 && <div className="mt-2 overflow-hidden rounded-2xl border border-[#342923]/10 bg-[#fdfaf7] p-1"><Calendar mode="single" selected={form.slotDate ? new Date(`${form.slotDate}T12:00:00`) : undefined} onSelect={date => setForm(current => ({ ...current, slotDate: date ? dateKey(date) : "", availabilitySlotId: "" }))} disabled={date => dateKey(date) < dateKey(new Date()) || !availableDateKeys.includes(dateKey(date))} modifiers={{ available: availableCalendarDates }} modifiersClassNames={{ available: "font-semibold text-[#5b3b35]" }} className="mx-auto bg-transparent" /></div>}
                   {form.slotDate && <p className="mt-2 text-xs font-medium capitalize text-[#5b3b35]">Data escolhida: {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(new Date(`${form.slotDate}T12:00:00`))}</p>}
                 </div>
                 <div className="sm:col-span-2">
                   <Label className="text-sm font-semibold">Escolha o horário</Label>
+                  <p className="mt-1 text-xs leading-5 text-[#705e56]">Somente horários livres aparecem nesta lista.</p>
                   {!form.slotDate && <p className="mt-2 text-sm text-[#705e56]">Primeiro escolha uma data disponível no calendário.</p>}
                   {form.slotDate && availabilityForDateQuery.isLoading && <p className="mt-2 text-sm text-[#705e56]">Carregando horários...</p>}
                   {form.slotDate && !availabilityForDateQuery.isLoading && (availabilityForDateQuery.data?.length ?? 0) === 0 && <p className="mt-2 rounded-xl border border-dashed border-[#342923]/15 bg-[#f8f2ec] p-4 text-sm text-[#705e56]">Os horários desta data já foram reservados. Selecione outra data.</p>}

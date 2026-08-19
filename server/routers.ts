@@ -6,7 +6,9 @@ import { systemRouter } from "./_core/systemRouter";
 import {
   createStudioAvailability,
   createStudioBooking,
+  closeStudioAvailabilityDate,
   deleteStudioAvailability,
+  generateStudioAvailability,
   getStudioService,
   listAvailableStudioAvailabilityForDate,
   listAvailableStudioDates,
@@ -25,6 +27,14 @@ import { ENV } from "./_core/env";
 
 const slotDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const slotTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+const availabilityGenerationSchema = z.object({
+  startDate: slotDateSchema,
+  endDate: slotDateSchema,
+  weekdays: z.array(z.number().int().min(0).max(6)).min(1).max(7),
+  startTime: slotTimeSchema,
+  endTime: slotTimeSchema,
+  durationMinutes: z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(90), z.literal(120)]),
+});
 
 function assertSlotRange(startTime: string, endTime: string) {
   if (startTime >= endTime) throw new TRPCError({ code: "BAD_REQUEST", message: "O horário de término deve ser posterior ao início." });
@@ -105,6 +115,21 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         assertSlotRange(input.startTime, input.endTime);
         await createStudioAvailability(input);
+        return { success: true } as const;
+      }),
+    generateAvailability: adminProcedure
+      .input(availabilityGenerationSchema)
+      .mutation(async ({ input }) => {
+        try {
+          return await generateStudioAvailability(input);
+        } catch (error) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Não foi possível gerar os horários." });
+        }
+      }),
+    closeAvailabilityDate: adminProcedure
+      .input(z.object({ slotDate: slotDateSchema }))
+      .mutation(async ({ input }) => {
+        await closeStudioAvailabilityDate(input.slotDate);
         return { success: true } as const;
       }),
     updateAvailability: adminProcedure

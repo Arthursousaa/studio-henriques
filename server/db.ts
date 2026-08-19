@@ -8,6 +8,7 @@ import {
   users,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { generateAvailabilitySlots, type AvailabilityGenerationInput } from "../shared/availabilityGenerator";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -232,6 +233,28 @@ export async function createStudioAvailability(values: { slotDate: string; start
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível");
   await db.insert(studioAvailabilitySlots).values({ ...values, status: "available" });
+}
+
+export async function generateStudioAvailability(values: AvailabilityGenerationInput) {
+  const slots = generateAvailabilitySlots(values);
+  let created = 0;
+  for (const slot of slots) {
+    try {
+      await createStudioAvailability(slot);
+      created += 1;
+    } catch {
+      // Horários que já existem são preservados para permitir gerar períodos sobrepostos sem duplicar a agenda.
+    }
+  }
+  return { created, total: slots.length };
+}
+
+export async function closeStudioAvailabilityDate(slotDate: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível");
+  await db.update(studioAvailabilitySlots)
+    .set({ status: "blocked" })
+    .where(and(eq(studioAvailabilitySlots.slotDate, slotDate), eq(studioAvailabilitySlots.status, "available")));
 }
 
 export async function updateStudioAvailability(id: number, status: Exclude<AvailabilityStatus, "booked">) {

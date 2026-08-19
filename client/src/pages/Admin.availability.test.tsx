@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const actions = vi.hoisted(() => ({
   createAvailability: vi.fn(),
+  generateAvailability: vi.fn(),
+  closeAvailabilityDate: vi.fn(),
   updateAvailability: vi.fn(),
   deleteAvailability: vi.fn(),
 }));
@@ -36,6 +38,8 @@ vi.mock("@/lib/trpc", () => ({
       updateBookingStatus: { useMutation: () => emptyMutation },
       updateUserRole: { useMutation: () => emptyMutation },
       createAvailability: { useMutation: () => ({ mutate: actions.createAvailability, isPending: false }) },
+      generateAvailability: { useMutation: () => ({ mutate: actions.generateAvailability, isPending: false }) },
+      closeAvailabilityDate: { useMutation: () => ({ mutate: actions.closeAvailabilityDate, isPending: false }) },
       updateAvailability: { useMutation: () => ({ mutate: actions.updateAvailability, isPending: false }) },
       deleteAvailability: { useMutation: () => ({ mutate: actions.deleteAvailability, isPending: false }) },
     },
@@ -52,16 +56,22 @@ describe("agenda no painel administrativo", () => {
     vi.clearAllMocks();
   });
 
-  it("permite liberar, bloquear e remover horários e prepara a confirmação sem enviar a mensagem", async () => {
+  it("permite definir o funcionamento, fechar um dia e preparar a confirmação sem enviar a mensagem", async () => {
     const user = userEvent.setup();
     render(<Admin />);
 
     expect(screen.getByRole("heading", { name: "Agenda e horários" })).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2026-08-21" } });
-    fireEvent.change(screen.getByLabelText("Início"), { target: { value: "13:00" } });
-    fireEvent.change(screen.getByLabelText("Término"), { target: { value: "14:00" } });
+    fireEvent.change(screen.getByLabelText("Data específica"), { target: { value: "2026-08-21" } });
+    fireEvent.change(screen.getByLabelText("Início específico"), { target: { value: "13:00" } });
+    fireEvent.change(screen.getByLabelText("Término específico"), { target: { value: "14:00" } });
     await user.click(screen.getByRole("button", { name: /Liberar/i }));
     expect(actions.createAvailability).toHaveBeenCalledWith({ slotDate: "2026-08-21", startTime: "13:00", endTime: "14:00" });
+
+    await user.click(screen.getByRole("button", { name: "Gerar horários" }));
+    expect(actions.generateAvailability).toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Data para fechar"), { target: { value: "2026-08-21" } });
+    await user.click(screen.getByRole("button", { name: "Fechar dia" }));
+    expect(actions.closeAvailabilityDate).toHaveBeenCalledWith({ slotDate: "2026-08-21" });
 
     await user.click(screen.getByRole("button", { name: "Bloquear" }));
     await user.click(screen.getByRole("button", { name: "Remover" }));

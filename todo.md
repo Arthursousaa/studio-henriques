@@ -72,3 +72,7 @@
 - [ ] Implementar confirmação de agendamento por WhatsApp com provedor oficial e configuração segura das credenciais.
 - [ ] Validar em produção a agenda, a prevenção de dupla reserva e as confirmações antes de ativar o envio real.
 - [x] Implementar confirmação gratuita na tela após a reserva e opção de abrir uma conversa do Studio no WhatsApp com dados pré-preenchidos, sem envio automático.
+- [x] Permitir que a administradora gere vários horários automaticamente a partir de dias, horário inicial, horário final e duração escolhidos.
+- [x] Permitir selecionar os dias de atendimento e ajustar exceções de disponibilidade sem cadastrar cada horário individualmente.
+- [x] Permitir que a administradora marque uma data inteira como fechada, preservando reservas já confirmadas.
+- [ ] Atualizar os testes e validar no site publicado a nova geração automática de horários.

@@ -5,6 +5,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { SignJWT, jwtVerify } from "jose";
 import superjson from "superjson";
 import { z } from "zod";
+import { generateAvailabilitySlots } from "../shared/availabilityGenerator";
 
 export interface Env {
   ASSETS: Fetcher;
@@ -205,6 +206,14 @@ function toAvailabilitySlot(row: AvailabilitySlotRow) {
 
 const slotDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe uma data válida.");
 const slotTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Informe um horário válido.");
+const availabilityGenerationSchema = z.object({
+  startDate: slotDateSchema,
+  endDate: slotDateSchema,
+  weekdays: z.array(z.number().int().min(0).max(6)).min(1).max(7),
+  startTime: slotTimeSchema,
+  endTime: slotTimeSchema,
+  durationMinutes: z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(90), z.literal(120)]),
+});
 
 function assertSlotRange(startTime: string, endTime: string) {
   if (startTime >= endTime) throw new TRPCError({ code: "BAD_REQUEST", message: "O horário de término deve ser posterior ao início." });
@@ -383,6 +392,33 @@ const appRouter = router({
           throw new TRPCError({ code: "CONFLICT", message: "Já existe um horário cadastrado nesse início. Escolha outro horário ou edite o existente." });
         }
         return { success: true } as const;
+      }),
+    generateAvailability: adminProcedure
+      .input(availabilityGenerationSchema)
+      .mutation(async ({ ctx, input }) => {
+        let slots;
+        try {
+          slots = generateAvailabilitySlots(input);
+        } catch (error) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Não foi possível gerar os horários." });
+        }
+        let created = 0;
+        for (let index = 0; index < slots.length; index += 100) {
+          const batch = await ctx.env.DB.batch(slots.slice(index, index + 100).map(slot =>
+            ctx.env.DB.prepare("INSERT OR IGNORE INTO studio_availability_slots (slot_date, start_time, end_time, status) VALUES (?, ?, ?, 'available')")
+              .bind(slot.slotDate, slot.startTime, slot.endTime),
+          ));
+          created += batch.reduce((count, result) => count + (result.meta.changes ?? 0), 0);
+        }
+        return { created, total: slots.length };
+      }),
+    closeAvailabilityDate: adminProcedure
+      .input(z.object({ slotDate: slotDateSchema }))
+      .mutation(async ({ ctx, input }) => {
+        const update = await ctx.env.DB.prepare("UPDATE studio_availability_slots SET status = 'blocked', updated_at = CURRENT_TIMESTAMP WHERE slot_date = ? AND status = 'available'")
+          .bind(input.slotDate)
+          .run();
+        return { success: true, blocked: update.meta.changes ?? 0 } as const;
       }),
     updateAvailability: adminProcedure
       .input(z.object({ id: z.number().int().positive(), status: z.enum(["available", "blocked"]) }))

@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const dbMocks = vi.hoisted(() => ({
   createStudioAvailability: vi.fn(),
+  generateStudioAvailability: vi.fn(),
+  closeStudioAvailabilityDate: vi.fn(),
   listStudioServices: vi.fn(),
   listAvailableStudioDates: vi.fn(),
   listAvailableStudioAvailabilityForDate: vi.fn(),
@@ -137,6 +139,18 @@ describe("Studio Henriques core flows", () => {
     await expect(caller.admin.createAvailability({ slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00" })).resolves.toEqual({ success: true });
     expect(dbMocks.createStudioAvailability).toHaveBeenCalledWith({ slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00" });
     await expect(caller.admin.createAvailability({ slotDate: "2026-08-20", startTime: "11:00", endTime: "10:00" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("lets the administrator generate operating hours and close a date without touching booked slots", async () => {
+    dbMocks.generateStudioAvailability.mockResolvedValue({ created: 18, total: 18 });
+    dbMocks.closeStudioAvailabilityDate.mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("admin"));
+    const operatingHours = { startDate: "2026-08-20", endDate: "2026-08-31", weekdays: [1, 2, 3, 4, 5], startTime: "09:00", endTime: "18:00", durationMinutes: 60 as const };
+
+    await expect(caller.admin.generateAvailability(operatingHours)).resolves.toEqual({ created: 18, total: 18 });
+    expect(dbMocks.generateStudioAvailability).toHaveBeenCalledWith(operatingHours);
+    await expect(caller.admin.closeAvailabilityDate({ slotDate: "2026-08-28" })).resolves.toEqual({ success: true });
+    expect(dbMocks.closeStudioAvailabilityDate).toHaveBeenCalledWith("2026-08-28");
   });
 
   it("lets the administrator block a free slot or remove it from the public calendar", async () => {

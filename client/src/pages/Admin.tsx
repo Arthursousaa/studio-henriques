@@ -50,6 +50,17 @@ const availabilityClass = {
   booked: "bg-[#e1e9f3] text-[#345f86]",
 } as const;
 
+const weekdays = [
+  { value: 1, label: "Seg" }, { value: 2, label: "Ter" }, { value: 3, label: "Qua" },
+  { value: 4, label: "Qui" }, { value: 5, label: "Sex" }, { value: 6, label: "Sáb" }, { value: 0, label: "Dom" },
+] as const;
+
+function inputDateAfter(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toLocaleDateString("en-CA");
+}
+
 function displayPrice(price: string, isPriceOnRequest = false) {
   if (isPriceOnRequest) return "Sob orçamento";
   const value = Number(price);
@@ -78,10 +89,19 @@ function AdminContent() {
   const [draftPrices, setDraftPrices] = useState<Record<number, string>>({});
   const [draftQuoteOnly, setDraftQuoteOnly] = useState<Record<number, boolean>>({});
   const [availabilityDraft, setAvailabilityDraft] = useState(() => ({
-    slotDate: new Date().toLocaleDateString("en-CA"),
+    slotDate: inputDateAfter(0),
     startTime: "09:00",
     endTime: "10:00",
   }));
+  const [generationDraft, setGenerationDraft] = useState(() => ({
+    startDate: inputDateAfter(0),
+    endDate: inputDateAfter(30),
+    weekdays: [1, 2, 3, 4, 5] as number[],
+    startTime: "09:00",
+    endTime: "18:00",
+    durationMinutes: 60 as 30 | 45 | 60 | 90 | 120,
+  }));
+  const [closeDate, setCloseDate] = useState(inputDateAfter(0));
   const isAdmin = user?.role === "admin";
   const accessQuery = trpc.admin.access.useQuery(undefined, { enabled: isAdmin });
   const servicesQuery = trpc.admin.services.useQuery(undefined, { enabled: isAdmin });
@@ -118,6 +138,24 @@ function AdminContent() {
       utils.studio.availabilityForDate.invalidate();
     },
     onError: error => toast.error(error.message || "Não foi possível disponibilizar este horário."),
+  });
+  const generateAvailability = trpc.admin.generateAvailability.useMutation({
+    onSuccess: result => {
+      toast.success(result.created > 0 ? `${result.created} horário${result.created === 1 ? "" : "s"} liberado${result.created === 1 ? "" : "s"}.` : "Os horários desse período já estavam cadastrados.");
+      utils.admin.availability.invalidate();
+      utils.studio.availableDates.invalidate();
+      utils.studio.availabilityForDate.invalidate();
+    },
+    onError: error => toast.error(error.message || "Não foi possível gerar os horários."),
+  });
+  const closeAvailabilityDate = trpc.admin.closeAvailabilityDate.useMutation({
+    onSuccess: () => {
+      toast.success("Data fechada no calendário público. Reservas já confirmadas foram preservadas.");
+      utils.admin.availability.invalidate();
+      utils.studio.availableDates.invalidate();
+      utils.studio.availabilityForDate.invalidate();
+    },
+    onError: error => toast.error(error.message || "Não foi possível fechar esta data."),
   });
   const updateAvailability = trpc.admin.updateAvailability.useMutation({
     onSuccess: () => {
@@ -197,17 +235,24 @@ function AdminContent() {
 
       <section className="rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-5 shadow-[0_20px_50px_-42px_rgba(60,37,30,0.48)] sm:p-7">
         <div className="flex flex-col justify-between gap-3 border-b border-[#342923]/10 pb-5 sm:flex-row sm:items-center">
-          <div><div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Agenda e horários</h2></div><p className="mt-1 max-w-2xl text-sm leading-6 text-[#705e56]">Cadastre os horários que as clientes poderão reservar. Você pode bloquear ou retirar horários, mas reservas confirmadas só são liberadas ao cancelar o atendimento.</p></div>
+          <div><div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Agenda e horários</h2></div><p className="mt-1 max-w-2xl text-sm leading-6 text-[#705e56]">Defina os dias e as faixas em que o Studio funciona; o sistema cria todos os horários automaticamente. Você ainda pode fechar um dia ou bloquear horários específicos. Reservas confirmadas são preservadas.</p></div>
           <Badge className="w-fit rounded-full bg-[#e0ecdf] px-3 py-1 text-[#427047] hover:bg-[#e0ecdf]">Calendário público</Badge>
         </div>
         <div className="mt-6 rounded-2xl bg-[#f8f2ec] p-4 sm:p-5">
-          <p className="text-sm font-semibold text-[#5b3b35]">Adicionar horário disponível</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-[1.2fr_1fr_1fr_auto] sm:items-end">
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Data<Input type="date" value={availabilityDraft.slotDate} min={new Date().toLocaleDateString("en-CA")} onChange={event => setAvailabilityDraft(current => ({ ...current, slotDate: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Início<Input type="time" value={availabilityDraft.startTime} onChange={event => setAvailabilityDraft(current => ({ ...current, startTime: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Término<Input type="time" value={availabilityDraft.endTime} onChange={event => setAvailabilityDraft(current => ({ ...current, endTime: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
-            <Button disabled={createAvailability.isPending} onClick={() => createAvailability.mutate(availabilityDraft)} className="h-10 rounded-full bg-[#5b3b35] px-5 text-[#fffaf2] hover:bg-[#754d45]"><CalendarDays className="mr-1.5 h-3.5 w-3.5" />Liberar</Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-[#5b3b35]">Gerar horários de funcionamento</p><p className="mt-1 text-xs leading-5 text-[#705e56]">Escolha o período, os dias em que atende e o intervalo de cada atendimento.</p></div><Badge className="w-fit rounded-full bg-[#fffdf9] px-3 py-1 text-[#705e56]">Até 500 horários por vez</Badge></div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">De<Input aria-label="Data inicial" type="date" value={generationDraft.startDate} min={inputDateAfter(0)} onChange={event => setGenerationDraft(current => ({ ...current, startDate: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Até<Input aria-label="Data final" type="date" value={generationDraft.endDate} min={generationDraft.startDate} onChange={event => setGenerationDraft(current => ({ ...current, endDate: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Abre<Input aria-label="Horário de abertura" type="time" value={generationDraft.startTime} onChange={event => setGenerationDraft(current => ({ ...current, startTime: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Fecha<Input aria-label="Horário de fechamento" type="time" value={generationDraft.endTime} onChange={event => setGenerationDraft(current => ({ ...current, endTime: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label>
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Duração<select aria-label="Duração de cada atendimento" value={generationDraft.durationMinutes} onChange={event => setGenerationDraft(current => ({ ...current, durationMinutes: Number(event.target.value) as typeof current.durationMinutes }))} className="mt-1 h-10 w-full rounded-xl border border-[#342923]/15 bg-white px-3 text-sm text-[#342923]"><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hora</option><option value="90">1h30</option><option value="120">2 horas</option></select></label>
           </div>
+          <fieldset className="mt-4"><legend className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Dias em que o Studio funciona</legend><div className="mt-2 flex flex-wrap gap-2">{weekdays.map(day => { const selected = generationDraft.weekdays.includes(day.value); return <button key={day.value} type="button" aria-pressed={selected} onClick={() => setGenerationDraft(current => ({ ...current, weekdays: selected ? current.weekdays.filter(value => value !== day.value) : [...current.weekdays, day.value] }))} className={`h-9 rounded-full border px-4 text-xs font-bold transition ${selected ? "border-[#5b3b35] bg-[#5b3b35] text-[#fffaf2]" : "border-[#342923]/15 bg-white text-[#705e56] hover:bg-[#f3e4da]"}`}>{day.label}</button>; })}</div></fieldset>
+          <Button disabled={generateAvailability.isPending} onClick={() => generateAvailability.mutate(generationDraft)} className="mt-5 h-10 rounded-full bg-[#5b3b35] px-5 text-[#fffaf2] hover:bg-[#754d45]"><CalendarDays className="mr-1.5 h-3.5 w-3.5" />Gerar horários</Button>
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl border border-[#342923]/10 bg-white p-4"><p className="text-sm font-semibold text-[#5b3b35]">Fechar uma data</p><p className="mt-1 text-xs leading-5 text-[#705e56]">Todos os horários livres dessa data deixam de aparecer para clientes. Reservas já confirmadas continuam registradas.</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><Input aria-label="Data para fechar" type="date" value={closeDate} min={inputDateAfter(0)} onChange={event => setCloseDate(event.target.value)} className="h-10 rounded-xl border-[#342923]/15 bg-white" /><Button variant="outline" disabled={closeAvailabilityDate.isPending} onClick={() => closeAvailabilityDate.mutate({ slotDate: closeDate })} className="h-10 rounded-full border-[#8a4239]/20 bg-white px-4 text-[#8a4239] hover:bg-[#f7eae7]"><Ban className="mr-1.5 h-3.5 w-3.5" />Fechar dia</Button></div></div>
+          <div className="rounded-2xl border border-[#342923]/10 bg-white p-4"><p className="text-sm font-semibold text-[#5b3b35]">Ajuste pontual</p><p className="mt-1 text-xs leading-5 text-[#705e56]">Use para liberar uma exceção fora do horário normal.</p><div className="mt-3 grid gap-2 sm:grid-cols-[1.2fr_1fr_1fr_auto] sm:items-end"><label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Data<Input aria-label="Data específica" type="date" value={availabilityDraft.slotDate} min={inputDateAfter(0)} onChange={event => setAvailabilityDraft(current => ({ ...current, slotDate: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label><label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Início<Input aria-label="Início específico" type="time" value={availabilityDraft.startTime} onChange={event => setAvailabilityDraft(current => ({ ...current, startTime: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label><label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8a756d]">Término<Input aria-label="Término específico" type="time" value={availabilityDraft.endTime} onChange={event => setAvailabilityDraft(current => ({ ...current, endTime: event.target.value }))} className="mt-1 h-10 rounded-xl border-[#342923]/15 bg-white" /></label><Button disabled={createAvailability.isPending} onClick={() => createAvailability.mutate(availabilityDraft)} className="h-10 rounded-full bg-[#5b3b35] px-4 text-[#fffaf2] hover:bg-[#754d45]">Liberar</Button></div></div>
         </div>
         <div className="mt-4 divide-y divide-[#342923]/10">
           {availabilityQuery.isLoading && <p className="py-8 text-sm text-[#705e56]">Carregando agenda...</p>}
