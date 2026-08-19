@@ -6,11 +6,20 @@ describe("Credencial Cloudflare", () => {
 
     expect(token).toBeTruthy();
 
-    const response = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12_000);
+    let response: Response;
+
+    try {
+      response = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const payload = (await response.json()) as {
       success?: boolean;
@@ -20,5 +29,5 @@ describe("Credencial Cloudflare", () => {
     expect(response.ok).toBe(true);
     expect(payload.success).toBe(true);
     expect(payload.result?.status).toBe("active");
-  });
+  }, 15_000);
 });

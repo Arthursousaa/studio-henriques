@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -9,6 +9,7 @@ const { services, requestInformation } = vi.hoisted(() => ({
     { id: 11, slug: "massagem-ventosa", name: "Massagem com ventosa", category: "Massagem", description: "Alívio e bem-estar.", price: "90.00", isPriceOnRequest: false },
     { id: 12, slug: "massagem-relaxante", name: "Massagem relaxante", category: "Massagem", description: "Pausa para o corpo.", price: "80.00", isPriceOnRequest: false },
     { id: 13, slug: "manicure", name: "Manicure", category: "Unhas", description: "Cuidado para as mãos.", price: "35.00", isPriceOnRequest: false },
+    { id: 14, slug: "axila", name: "Axila", category: "Depilação", description: "Escolha o método de sua preferência.", price: "30.00", isPriceOnRequest: false },
   ],
   requestInformation: vi.fn(),
 }));
@@ -32,21 +33,40 @@ describe("filtro de serviços e pedido de informações", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.clearAllMocks();
   });
 
-  it("filtra massagens e pré-seleciona o serviço clicado no formulário", async () => {
+  it("abre as opções de massagem e pré-seleciona o serviço clicado no formulário", async () => {
     const user = userEvent.setup();
     render(<Home />);
 
-    await user.click(screen.getByRole("tab", { name: "Massagem" }));
+    await user.click(screen.getByRole("button", { name: /Massagem.*2 opções para escolher/i }));
 
     expect(screen.getByText("Massagem com ventosa")).toBeTruthy();
     expect(screen.getByText("Massagem relaxante")).toBeTruthy();
     expect(screen.queryByText("Manicure")).toBeNull();
 
-    await user.click(screen.getAllByRole("button", { name: "Quero saber mais" })[0]);
+    await user.click(screen.getAllByRole("button", { name: /Escolher opção/i })[0]);
 
     expect((screen.getByLabelText("Qual serviço você deseja?") as HTMLSelectElement).value).toBe("11");
+  });
+
+  it("permite escolher laser antes da área de depilação e registra a preferência no formulário", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    await user.click(screen.getByRole("button", { name: /Depilação.*Escolha cera ou laser/i }));
+    await user.click(screen.getByRole("button", { name: /Escolher laser/i }));
+
+    expect(screen.getByText("Axila")).toBeTruthy();
+    expect(screen.getByText("Sob consulta")).toBeTruthy();
+
+    const axilaCard = screen.getByText("Axila").closest("article");
+    expect(axilaCard).toBeTruthy();
+    await user.click(within(axilaCard as HTMLElement).getByRole("button", { name: /Escolher opção/i }));
+
+    expect((screen.getByLabelText("Qual serviço você deseja?") as HTMLSelectElement).value).toBe("14");
+    expect(screen.getByRole("button", { name: "Laser" }).className).toContain("bg-[#5b3b35]");
   });
 });

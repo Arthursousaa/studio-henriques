@@ -1,7 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { selectServiceForInfoRequest } from "../lib/infoRequestSelection";
+import { buildInfoRequestNotes, selectServiceForInfoRequest } from "../lib/infoRequestSelection";
 import { filterServicesByCategory } from "../lib/serviceFilters";
 import { PublicServiceCard, PublicServiceOptions, type PublicStudioService } from "./Home";
 
@@ -34,5 +34,15 @@ describe("catálogo público importado", () => {
     expect(bemEstar).toHaveLength(1);
     expect(bemEstar[0].name).toBe("Maquiagem");
     expect(form.serviceId).toBe("14");
+  });
+
+  it("registra a preferência por laser no pedido sem atribuir o preço de cera", () => {
+    const form = selectServiceForInfoRequest({ serviceId: "", depilationMethod: "" as "" | "Cera" | "Laser" }, 14, { depilationMethod: "Laser" });
+    const markup = renderToStaticMarkup(<select><PublicServiceOptions services={[{ ...importedServices[0], category: "Depilação" }]} depilationMethod="Laser" /></select>);
+
+    const method = form["depilationMethod"];
+    expect(method).toBe("Laser");
+    expect(buildInfoRequestNotes("Quero saber as condições.", method || undefined)).toContain("Preferência para depilação: Laser.");
+    expect(markup).toContain("Sob consulta");
   });
 });

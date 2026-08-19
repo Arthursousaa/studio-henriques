@@ -60,3 +60,7 @@
 - [x] Executar e registrar uma validação fim a fim do formulário de cadastro publicado após o primeiro acesso real da proprietária.
 - [x] Registrar em documentação o cadastro, login e acesso real da administradora inicial após a correção publicada.
 - [x] Registrar a confirmação da proprietária de que o painel `/admin` abriu com a sessão administrativa ativa.
+- [x] Exibir no painel Cloudflare o nome da administradora logada, sem saudação fixa para Jaqueline.
+- [x] Reorganizar o catálogo para abrir opções relacionadas depois que a cliente selecionar um serviço ou categoria.
+- [x] Separar a depilação por cera e laser usando somente serviços, áreas e preços confirmados pela proprietária.
+- [x] Mostrar as mesmas áreas de depilação em Cera e Laser, identificando o método escolhido antes do pedido de informações.

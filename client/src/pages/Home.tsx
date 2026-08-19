@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { selectServiceForInfoRequest } from "@/lib/infoRequestSelection";
+import { buildInfoRequestNotes, selectServiceForInfoRequest } from "@/lib/infoRequestSelection";
 import { formatServicePrice } from "@/lib/servicePresentation";
 import { filterServicesByCategory, getServiceCategories } from "@/lib/serviceFilters";
 import { trpc } from "@/lib/trpc";
@@ -29,6 +29,7 @@ type InfoRequestForm = {
   customerName: string;
   customerPhone: string;
   notes: string;
+  depilationMethod: "" | "Cera" | "Laser";
 };
 
 export type PublicStudioService = {
@@ -46,7 +47,10 @@ const initialForm: InfoRequestForm = {
   customerName: "",
   customerPhone: "",
   notes: "",
+  depilationMethod: "",
 };
+
+type DepilationMethod = Exclude<InfoRequestForm["depilationMethod"], "">;
 
 function ServiceIcon({ slug }: { slug: string }) {
   const className = "h-5 w-5";
@@ -58,7 +62,7 @@ function ServiceIcon({ slug }: { slug: string }) {
   return <Hand className={className} />;
 }
 
-export function PublicServiceCard({ service, onSelect }: { service: PublicStudioService; onSelect: (id: number) => void }) {
+export function PublicServiceCard({ service, onSelect, depilationMethod }: { service: PublicStudioService; onSelect: (id: number) => void; depilationMethod?: DepilationMethod }) {
   return (
     <article className="group flex min-h-64 flex-col rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-6 shadow-[0_16px_40px_-32px_rgba(60,37,30,0.45)] transition-all duration-200 hover:-translate-y-1 hover:border-[#a4675d]/30 hover:shadow-[0_22px_45px_-30px_rgba(60,37,30,0.55)]">
       <div className="flex items-start justify-between">
@@ -69,9 +73,9 @@ export function PublicServiceCard({ service, onSelect }: { service: PublicStudio
         <h3 className="font-serif text-2xl tracking-[-0.03em]">{service.name}</h3>
         <p className="mt-2 min-h-12 text-sm leading-6 text-[#705e56]">{service.description}</p>
         <div className="mt-5 flex items-center justify-between border-t border-[#342923]/10 pt-4">
-          <span className="font-semibold text-[#5b3b35]">{formatServicePrice(service.price, service.isPriceOnRequest)}</span>
+          <span className="font-semibold text-[#5b3b35]">{depilationMethod === "Laser" ? "Sob consulta" : formatServicePrice(service.price, service.isPriceOnRequest)}</span>
           <button className="text-sm font-semibold text-[#a4675d] transition-colors hover:text-[#5b3b35]" onClick={() => onSelect(service.id)}>
-            Quero saber mais <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+            Escolher opção <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -79,14 +83,19 @@ export function PublicServiceCard({ service, onSelect }: { service: PublicStudio
   );
 }
 
-export function PublicServiceOptions({ services }: { services: PublicStudioService[] }) {
-  return <>{services.map(service => <option value={service.id} key={service.id}>{service.name} — {formatServicePrice(service.price, service.isPriceOnRequest)}</option>)}</>;
+export function PublicServiceOptions({ services, depilationMethod }: { services: PublicStudioService[]; depilationMethod?: DepilationMethod }) {
+  return <>{services.map(service => {
+    const isLaser = service.category === "Depilação" && depilationMethod === "Laser";
+    const methodLabel = service.category === "Depilação" && depilationMethod ? ` (${depilationMethod})` : "";
+    return <option value={service.id} key={service.id}>{service.name}{methodLabel} — {isLaser ? "Sob consulta" : formatServicePrice(service.price, service.isPriceOnRequest)}</option>;
+  })}</>;
 }
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState<InfoRequestForm>(initialForm);
-  const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedDepilationMethod, setSelectedDepilationMethod] = useState<DepilationMethod | "">("");
   const servicesQuery = trpc.studio.services.useQuery();
   const createBooking = trpc.studio.requestBooking.useMutation({
     onSuccess: () => {
@@ -101,8 +110,8 @@ export default function Home() {
     () => services.find(service => service.id === Number(form.serviceId)),
     [form.serviceId, services],
   );
-  const serviceCategories = useMemo(() => getServiceCategories(services), [services]);
-  const filteredServices = useMemo(() => filterServicesByCategory(services, selectedCategory), [services, selectedCategory]);
+  const serviceCategories = useMemo(() => getServiceCategories(services).filter(category => category !== "Todos"), [services]);
+  const filteredServices = useMemo(() => selectedCategory ? filterServicesByCategory(services, selectedCategory) : [], [services, selectedCategory]);
 
   function scrollToBooking() {
     document.querySelector("#agendar")?.scrollIntoView({ behavior: "smooth" });
@@ -120,12 +129,27 @@ export default function Home() {
       return;
     }
 
+    if (selectedService.category === "Depilação" && !form["depilationMethod"]) {
+      toast.error("Escolha se prefere depilação por cera ou laser.");
+      return;
+    }
+
     createBooking.mutate({
       serviceId: selectedService.id,
       customerName: form.customerName,
       customerPhone: form.customerPhone,
-      notes: form.notes || undefined,
+      notes: buildInfoRequestNotes(form.notes, form["depilationMethod"] || undefined),
     });
+  }
+
+  function selectCategory(category: string) {
+    setSelectedCategory(category);
+    setSelectedDepilationMethod("");
+  }
+
+  function selectService(id: number, depilationMethod: DepilationMethod | "" = "") {
+    setForm(current => selectServiceForInfoRequest(current, id, { depilationMethod }));
+    scrollToBooking();
   }
 
   return (
@@ -213,31 +237,52 @@ export default function Home() {
               <h2 className="max-w-sm font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">Cuidado pensado para você.</h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-[#705e56] lg:pb-1">
-              Escolha uma categoria para ver apenas os cuidados que procura. Ao tocar em um serviço, ele já fica selecionado no seu pedido de informações.
+              Comece pelo tipo de cuidado e, em seguida, escolha a opção que combina com você. Na depilação, você também seleciona entre cera e laser antes da área.
             </p>
           </div>
 
-          <div className="mt-9 flex flex-wrap gap-2" role="tablist" aria-label="Categorias de serviços">
-            {serviceCategories.map(category => (
-              <button
-                key={category}
-                role="tab"
-                aria-selected={selectedCategory === category}
-                onClick={() => setSelectedCategory(category)}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all active:scale-[0.98] ${selectedCategory === category ? "border-[#5b3b35] bg-[#5b3b35] text-[#fffaf2] shadow-sm" : "border-[#342923]/15 bg-[#fffdf9] text-[#705e56] hover:border-[#a4675d]/50 hover:text-[#5b3b35]"}`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
+          {!selectedCategory ? (
+            <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Tipos de serviço">
+              {servicesQuery.isLoading && Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-56 animate-pulse rounded-[1.5rem] bg-[#f1e8df]" />)}
+              {serviceCategories.map(category => {
+                const optionCount = filterServicesByCategory(services, category).length;
+                const iconSlug = category === "Depilação" ? "depilacao" : category === "Massagens" ? "massagem" : category === "Pés" ? "pedicure" : category === "Unhas" ? "alongamentos" : "sobrancelhas";
+                return (
+                  <button key={category} onClick={() => selectCategory(category)} className="group rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-6 text-left shadow-[0_16px_40px_-32px_rgba(60,37,30,0.45)] transition-all hover:-translate-y-1 hover:border-[#a4675d]/30 hover:shadow-[0_22px_45px_-30px_rgba(60,37,30,0.55)]">
+                    <span className="grid h-11 w-11 place-items-center rounded-full bg-[#f2e2d7] text-[#94594e]"><ServiceIcon slug={iconSlug} /></span>
+                    <span className="mt-10 block font-serif text-2xl tracking-[-0.03em]">{category}</span>
+                    <span className="mt-2 block text-sm leading-6 text-[#705e56]">{category === "Depilação" ? "Escolha cera ou laser e depois a área." : `${optionCount} opções para escolher.`}</span>
+                    <span className="mt-5 block border-t border-[#342923]/10 pt-4 text-sm font-semibold text-[#a4675d]">Ver opções <ArrowRight className="ml-1 inline h-3.5 w-3.5" /></span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <>
+              <div className="mt-10 flex flex-wrap items-center gap-3">
+                <button onClick={() => selectCategory("")} className="rounded-full border border-[#342923]/15 bg-[#fffdf9] px-4 py-2 text-sm font-semibold text-[#705e56] transition-colors hover:border-[#a4675d]/50 hover:text-[#5b3b35]">← Todos os tipos</button>
+                <p className="font-serif text-2xl tracking-[-0.03em]">{selectedCategory === "Depilação" && selectedDepilationMethod ? `Depilação por ${selectedDepilationMethod}` : `Opções de ${selectedCategory}`}</p>
+              </div>
 
-          <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {servicesQuery.isLoading && Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="h-64 animate-pulse rounded-[1.5rem] bg-[#f1e8df]" />
-            ))}
-            {filteredServices.map(service => <PublicServiceCard key={service.id} service={service} onSelect={id => { setForm(current => selectServiceForInfoRequest(current, id)); scrollToBooking(); }} />)}
-            {!servicesQuery.isLoading && filteredServices.length === 0 && <p className="col-span-full rounded-2xl border border-dashed border-[#342923]/15 bg-[#fffdf9] p-8 text-center text-sm text-[#705e56]">Nenhum serviço disponível nesta categoria no momento.</p>}
-          </div>
+              {selectedCategory === "Depilação" && !selectedDepilationMethod ? (
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {(["Cera", "Laser"] as const).map(method => (
+                    <button key={method} onClick={() => setSelectedDepilationMethod(method)} className="rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-6 text-left shadow-[0_16px_40px_-32px_rgba(60,37,30,0.45)] transition-all hover:-translate-y-1 hover:border-[#a4675d]/30 hover:shadow-[0_22px_45px_-30px_rgba(60,37,30,0.55)]">
+                      <span className="grid h-11 w-11 place-items-center rounded-full bg-[#f2e2d7] text-[#94594e]"><WandSparkles className="h-5 w-5" /></span>
+                      <span className="mt-10 block font-serif text-2xl tracking-[-0.03em]">Depilação por {method}</span>
+                      <span className="mt-2 block text-sm leading-6 text-[#705e56]">{method === "Cera" ? "Veja os valores por área e escolha a sua preferência." : "Escolha a área para solicitar informações e disponibilidade."}</span>
+                      <span className="mt-5 block border-t border-[#342923]/10 pt-4 text-sm font-semibold text-[#a4675d]">Escolher {method.toLowerCase()} <ArrowRight className="ml-1 inline h-3.5 w-3.5" /></span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredServices.map(service => <PublicServiceCard key={service.id} service={service} depilationMethod={selectedCategory === "Depilação" ? selectedDepilationMethod || undefined : undefined} onSelect={id => selectService(id, selectedCategory === "Depilação" ? selectedDepilationMethod : "")} />)}
+                  {!servicesQuery.isLoading && filteredServices.length === 0 && <p className="col-span-full rounded-2xl border border-dashed border-[#342923]/15 bg-[#fffdf9] p-8 text-center text-sm text-[#705e56]">Nenhuma opção disponível neste momento.</p>}
+                </div>
+              )}
+            </>
+          )}
         </section>
 
         <section id="sobre" className="overflow-hidden bg-[#5b3b35] text-[#fffaf2]">
@@ -290,11 +335,25 @@ export default function Home() {
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="service" className="text-sm font-semibold">Qual serviço você deseja?</Label>
-                  <select id="service" value={form.serviceId} onChange={event => updateForm("serviceId", event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-[#342923]/15 bg-white px-3 text-sm outline-none transition focus:border-[#a4675d] focus:ring-2 focus:ring-[#dcb4a4]/40">
+                  <select id="service" value={form.serviceId} onChange={event => {
+                    const nextService = services.find(service => service.id === Number(event.target.value));
+                    setForm(current => ({ ...current, serviceId: event.target.value, depilationMethod: nextService?.category === "Depilação" ? current["depilationMethod"] : "" }));
+                  }} className="mt-2 h-11 w-full rounded-xl border border-[#342923]/15 bg-white px-3 text-sm outline-none transition focus:border-[#a4675d] focus:ring-2 focus:ring-[#dcb4a4]/40">
                     <option value="">Selecione um serviço</option>
-                    <PublicServiceOptions services={services} />
+                    <PublicServiceOptions services={services} depilationMethod={form["depilationMethod"] || undefined} />
                   </select>
                 </div>
+                {selectedService?.category === "Depilação" && (
+                  <div className="sm:col-span-2">
+                    <Label className="text-sm font-semibold">Qual método de depilação você prefere?</Label>
+                    <div className="mt-2 grid grid-cols-2 gap-3">
+                      {(["Cera", "Laser"] as const).map(method => (
+                        <button type="button" key={method} onClick={() => updateForm("depilationMethod", method)} className={`h-11 rounded-xl border text-sm font-semibold transition ${form["depilationMethod"] === method ? "border-[#5b3b35] bg-[#5b3b35] text-[#fffaf2]" : "border-[#342923]/15 bg-white text-[#705e56] hover:border-[#a4675d]/50 hover:text-[#5b3b35]"}`}>{method}</button>
+                      ))}
+                    </div>
+                    {form["depilationMethod"] === "Laser" && <p className="mt-2 text-xs leading-5 text-[#705e56]">Os valores de depilação a laser são informados pelo Studio conforme a área e a disponibilidade.</p>}
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="customerName" className="text-sm font-semibold">Seu nome</Label>
                   <Input id="customerName" value={form.customerName} onChange={event => updateForm("customerName", event.target.value)} placeholder="Como podemos te chamar?" className="mt-2 h-11 rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />

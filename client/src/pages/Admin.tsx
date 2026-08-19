@@ -134,7 +134,7 @@ function AdminContent() {
       <section className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a4675d]">Área administrativa</p>
-          <h1 className="mt-2 font-serif text-4xl tracking-[-0.045em] text-[#342923]">Olá, Jaqueline.</h1>
+          <h1 className="mt-2 font-serif text-4xl tracking-[-0.045em] text-[#342923]">Olá, {user?.name?.split(" ")[0] || "administradora"}.</h1>
           <p className="mt-2 text-sm text-[#705e56]">Acompanhe os pedidos e mantenha seus serviços atualizados.</p>
         </div>
         <Button asChild variant="outline" className="rounded-full border-[#5b3b35]/20 bg-[#fffdf9] text-[#5b3b35] hover:bg-[#f3e4da]"><a href="/" target="_blank" rel="noreferrer">Ver site público <ExternalLink className="ml-2 h-4 w-4" /></a></Button>
