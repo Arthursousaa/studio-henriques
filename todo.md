@@ -40,3 +40,4 @@
 - [x] Adaptar o pedido de informações da versão estática para abrir o WhatsApp com o serviço selecionado, sem envio automático.
 - [x] Documentar quais funções administrativas não estarão disponíveis na versão estática e como atualizar serviços e preços no código.
 - [x] Configurar o repositório para publicar a versão estática gratuitamente no GitHub Pages.
+- [x] Aproximar visual, seções, navegação e fluxos públicos da versão estática do GitHub Pages à experiência do site completo.

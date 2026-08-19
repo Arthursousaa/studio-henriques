@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Studio Henriques — estética, beleza e bem-estar." />
+    <meta name="description" content="Studio Henriques — estética, beleza e bem-estar em São Paulo." />
+    <meta name="theme-color" content="#5b3b35" />
     <title>Studio Henriques | Beleza & Bem-estar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,15 +12,141 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="header"><a class="brand" href="#inicio"><span>SH</span><strong>Studio Henriques<small>Beleza & Bem-estar</small></strong></a><nav><a href="#servicos">Serviços</a><a href="#sobre">Sobre</a><a href="#contato">Contato</a></nav></header>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="#inicio" aria-label="Studio Henriques, início">
+          <span class="brand-mark" aria-hidden="true">SH</span>
+          <span class="brand-copy"><strong>Studio Henriques</strong><small>Beleza &amp; bem-estar</small></span>
+        </a>
+        <nav class="desktop-nav" aria-label="Navegação principal">
+          <a href="#servicos">Serviços</a>
+          <a href="#sobre">Sobre a Jaqueline</a>
+          <a href="#informacoes">Agendar</a>
+        </nav>
+        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <nav class="mobile-nav" id="mobileMenu" aria-label="Navegação móvel" hidden>
+        <a href="#servicos">Serviços</a>
+        <a href="#sobre">Sobre a Jaqueline</a>
+        <a href="#informacoes">Agendar</a>
+      </nav>
+    </header>
+
     <main>
-      <section class="hero" id="inicio"><p class="eyebrow">Seu momento de cuidado começa aqui</p><h1>Beleza que acompanha o seu ritmo.</h1><p>Um espaço pensado para você reservar um tempo, cuidar de si e sair ainda mais confiante.</p><a class="button" href="#servicos">Conhecer serviços</a></section>
-      <section class="section" id="servicos"><p class="eyebrow">Catálogo</p><h2>Escolha o seu cuidado</h2><p class="intro">Toque em uma categoria para encontrar o que procura. Ao escolher um serviço, seu pedido de informações já fica pronto.</p><div id="filters" class="filters" aria-label="Filtros de serviços"></div><div id="services" class="services"></div></section>
-      <section class="request" id="informacoes"><div><p class="eyebrow">Pedido de informações</p><h2>Vamos conversar sobre seu atendimento?</h2><p>Preencha seus dados e abra o WhatsApp com a sua solicitação preparada. O envio e a confirmação ficam sempre nas suas mãos.</p></div><form id="contactForm"><label>Serviço<select id="serviceSelect" required></select></label><label>Seu nome<input id="name" required placeholder="Como podemos te chamar?" /></label><label>Seu WhatsApp<input id="phone" required inputmode="tel" placeholder="(11) 99999-9999" /></label><label>Mensagem (opcional)<textarea id="message" placeholder="Conte algo importante para o seu atendimento."></textarea></label><button class="button" type="submit">Abrir WhatsApp</button><p class="form-note">O Studio confirmará disponibilidade e detalhes diretamente pelo WhatsApp.</p></form></section>
-      <section class="about section" id="sobre"><p class="eyebrow">Sobre a Jaqueline</p><h2>Cuidar de você também é a minha paixão.</h2><p>Sou Jaqueline Henriques, estudante de Estética e fundadora do Studio Henriques. Criei este espaço para oferecer cuidados, bem-estar e momentos especiais para cada cliente, porque acredito que estética também é confiança, autocuidado e amor-próprio.</p></section>
-      <section class="contact" id="contato"><div><p class="eyebrow">Contato</p><h2>Studio Henriques</h2><p>Rua São Carlos, 80 — Jardim Tereza Bononi<br />São Paulo — SP</p></div><a class="button secondary" href="https://wa.me/5511992698360" target="_blank" rel="noreferrer">Falar no WhatsApp</a></section>
+      <section class="hero" id="inicio" aria-labelledby="hero-title">
+        <div class="hero-glow hero-glow-one" aria-hidden="true"></div>
+        <div class="hero-glow hero-glow-two" aria-hidden="true"></div>
+        <div class="page-shell hero-inner">
+          <div class="hero-copy">
+            <p class="hero-kicker"><span aria-hidden="true">✦</span> Seu momento de cuidado começa aqui</p>
+            <h1 id="hero-title">Beleza que acompanha o seu ritmo.</h1>
+            <p class="hero-description">Um espaço pensado para você reservar um tempo, cuidar de si e sair ainda mais confiante.</p>
+            <div class="hero-actions">
+              <a class="button button-light" href="#informacoes">Agendar meu horário <span aria-hidden="true">→</span></a>
+              <a class="text-link text-link-light" href="#servicos">Conhecer serviços</a>
+            </div>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="art-ring art-ring-gold"></div>
+            <div class="art-ring art-ring-cream"></div>
+            <div class="art-card">
+              <span>SH</span>
+              <p>Seu cuidado<br />em primeiro lugar.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="trust-bar" aria-label="Destaques do atendimento">
+        <div class="page-shell trust-grid">
+          <p><span class="trust-icon" aria-hidden="true">◷</span> Agendamento simples pelo WhatsApp</p>
+          <p><span class="trust-icon" aria-hidden="true">◌</span> Atendimento com hora marcada</p>
+          <p><span class="trust-icon" aria-hidden="true">✓</span> Preços sempre atualizados</p>
+        </div>
+      </section>
+
+      <section class="page-shell services-section" id="servicos" aria-labelledby="services-title">
+        <div class="section-heading section-heading-split">
+          <div>
+            <p class="eyebrow">Serviços</p>
+            <h2 id="services-title">Cuidado pensado para você.</h2>
+          </div>
+          <p class="section-intro">Escolha uma categoria para ver apenas os cuidados que procura. Ao tocar em um serviço, ele já fica selecionado no seu pedido de informações.</p>
+        </div>
+        <div id="filters" class="filters" role="group" aria-label="Categorias de serviços"></div>
+        <div id="services" class="services-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="about" id="sobre" aria-labelledby="about-title">
+        <div class="page-shell about-grid">
+          <div class="about-mark" aria-label="Identidade visual do Studio Henriques">
+            <div class="about-orbit about-orbit-gold" aria-hidden="true"></div>
+            <div class="about-orbit about-orbit-light" aria-hidden="true"></div>
+            <div class="about-mark-content">
+              <span class="monogram">JH</span>
+              <div class="name-plaque"><strong>Jaqueline Henriques</strong><small>Studio de estética e beleza</small></div>
+              <p>Cuidar de você também é a minha paixão.</p>
+            </div>
+          </div>
+          <div class="about-copy">
+            <p class="eyebrow eyebrow-soft">Sobre a Jaqueline</p>
+            <h2 id="about-title">Estética com escuta, propósito e cuidado.</h2>
+            <div class="about-text">
+              <p>Meu nome é Jaqueline Henriques, tenho 27 anos e sou estudante de Estética, atualmente no 3º semestre. Sou apaixonada pelo poder que o autocuidado tem de transformar a autoestima.</p>
+              <p>Sou fundadora do Studio Henriques, um espaço criado com carinho para oferecer cuidados, bem-estar e momentos especiais. Para mim, a estética vai muito além da beleza: ela está ligada à confiança, ao cuidado com o corpo e ao amor-próprio.</p>
+            </div>
+            <div class="about-highlights">
+              <div><span>Em constante evolução</span><p>Estou sempre aprendendo para oferecer um atendimento cada vez mais atento e especial.</p></div>
+              <div><span>Bem-estar na rotina</span><p>Treino, corrida e momentos tranquilos fazem parte da minha forma de viver e cuidar de mim.</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="information-section" id="informacoes" aria-labelledby="information-title">
+        <div class="information-glow" aria-hidden="true"></div>
+        <div class="page-shell information-grid">
+          <div class="information-copy">
+            <p class="eyebrow">Mais informações</p>
+            <h2 id="information-title">Vamos conversar sobre o seu cuidado?</h2>
+            <p>Escolha um serviço, conte o que você precisa e deixe seu WhatsApp. A Jaqueline retornará para esclarecer dúvidas e combinar o melhor horário.</p>
+            <aside class="help-note"><strong><span aria-hidden="true">◌</span> Atendimento personalizado</strong><p>A confirmação de horário e os detalhes são combinados diretamente com você pelo WhatsApp.</p></aside>
+          </div>
+          <form class="contact-form" id="contactForm">
+            <div class="form-grid">
+              <label class="field field-wide">Qual serviço você deseja?
+                <select id="serviceSelect" required aria-describedby="formStatus"></select>
+              </label>
+              <label class="field">Seu nome
+                <input id="name" name="name" required autocomplete="name" placeholder="Como podemos te chamar?" />
+              </label>
+              <label class="field">Seu WhatsApp
+                <input id="phone" name="phone" required autocomplete="tel" inputmode="tel" placeholder="(11) 99999-9999" />
+              </label>
+              <label class="field field-wide">Como podemos ajudar? <span>(opcional)</span>
+                <textarea id="message" name="message" maxlength="600" placeholder="Conte qual informação você gostaria de receber."></textarea>
+              </label>
+            </div>
+            <button class="button button-primary button-wide" type="submit">Continuar pelo WhatsApp <span aria-hidden="true">→</span></button>
+            <p class="form-status" id="formStatus" aria-live="polite">A mensagem será preparada no WhatsApp; o envio ficará sempre nas suas mãos.</p>
+          </form>
+        </div>
+      </section>
+
+      <section class="contact-strip" id="contato" aria-labelledby="contact-title">
+        <div class="page-shell contact-grid">
+          <div><p class="eyebrow">Contato</p><h2 id="contact-title">Venha cuidar de você.</h2></div>
+          <div class="contact-detail"><span>Endereço</span><p>Rua Ipatinga, 28A<br />Vila Princesa Isabel</p></div>
+          <div class="contact-detail"><span>WhatsApp</span><a href="https://wa.me/5511992698360" target="_blank" rel="noreferrer">(11) 99269-8360</a></div>
+        </div>
+      </section>
     </main>
-    <footer>© <span id="year"></span> Studio Henriques · Estética e Beleza</footer>
-    <script src="app.js"></script>
+
+    <footer class="site-footer">
+      <div class="page-shell footer-inner"><p><span class="footer-mark" aria-hidden="true">SH</span> Studio Henriques · Beleza &amp; bem-estar</p><a href="#informacoes">Agendar</a></div>
+    </footer>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
