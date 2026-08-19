@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "studio-henriques",
+  "main": "cloudflare/worker.ts",
+  "compatibility_date": "2026-08-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "c5b4d93717bb95b66d625537e655ad45",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "studio-henriques",
+      "database_id": "81ed6187-ac8e-4bf9-9a68-46ea069303c5"
+    }
+  ],
+  "assets": {
+    "directory": "./cloudflare/public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  }
+}

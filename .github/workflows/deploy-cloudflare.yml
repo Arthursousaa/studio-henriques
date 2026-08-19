@@ -1,0 +1,45 @@
+name: Publicar site completo na Cloudflare
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "client/**"
+      - "cloudflare/**"
+      - "shared/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "vite.cloudflare.config.ts"
+      - "wrangler.jsonc"
+      - ".github/workflows/deploy-cloudflare.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Compilar e publicar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Preparar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Publicar Worker e interface
+        run: pnpm run cf:deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

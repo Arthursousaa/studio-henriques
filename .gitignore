@@ -6,6 +6,8 @@
 dist/
 build/
 *.dist
+cloudflare/public/
+.wrangler/
 
 # Environment variables
 .env

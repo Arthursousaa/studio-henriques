@@ -41,3 +41,15 @@
 - [x] Documentar quais funções administrativas não estarão disponíveis na versão estática e como atualizar serviços e preços no código.
 - [x] Configurar o repositório para publicar a versão estática gratuitamente no GitHub Pages.
 - [x] Aproximar visual, seções, navegação e fluxos públicos da versão estática do GitHub Pages à experiência do site completo.
+- [x] Definir uma hospedagem compatível com servidor, banco de dados, autenticação e painel administrativo, mantendo o GitHub como repositório do código.
+- [ ] Preparar e publicar fora do GitHub Pages uma versão completa com edição de preços, pedidos salvos e controle de administradoras.
+- [ ] Validar o acesso público e a administração na nova hospedagem completa.
+- [x] Conectar a conta Cloudflare da proprietária e provisionar os recursos para a migração completa.
+- [ ] Adaptar a aplicação, o banco e a autenticação para Cloudflare Workers e D1, preservando o painel administrativo.
+- [ ] Configurar publicação contínua do site completo pelo repositório GitHub na Cloudflare.
+- [x] Conectar uma credencial Cloudflare ativa e com permissão de escrita no D1 para a conta da proprietária.
+- [x] Validar a permissão de escrita em Workers antes de publicar a aplicação completa.
+- [ ] Definir os dois logins administrativos e configurar suas senhas de forma segura para a autenticação independente.
+- [x] Definir `sousaarthur213@gmail.com` como a conta administradora inicial da autenticação independente.
+- [ ] Validar em produção o cadastro e o login da conta administradora inicial em `/admin/login`.
+- [ ] Validar em produção pedidos, edição de preços/serviços e promoção de administradoras na Cloudflare.
