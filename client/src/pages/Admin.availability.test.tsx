@@ -67,8 +67,8 @@ describe("agenda no painel administrativo", () => {
     await user.click(screen.getByRole("button", { name: /Liberar/i }));
     expect(actions.createAvailability).toHaveBeenCalledWith({ slotDate: "2026-08-21", startTime: "13:00", endTime: "14:00" });
 
-    await user.click(screen.getByRole("button", { name: "Gerar horários" }));
-    expect(actions.generateAvailability).toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Atualizar horários" }));
+    expect(actions.generateAvailability).toHaveBeenCalledWith({ weekdays: [1, 2, 3, 4, 5], startTime: "09:00", endTime: "18:00", durationMinutes: 60 });
     fireEvent.change(screen.getByLabelText("Data para fechar"), { target: { value: "2026-08-21" } });
     await user.click(screen.getByRole("button", { name: "Fechar dia" }));
     expect(actions.closeAvailabilityDate).toHaveBeenCalledWith({ slotDate: "2026-08-21" });

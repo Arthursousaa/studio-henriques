@@ -7,6 +7,8 @@ export type AvailabilityGenerationInput = {
   durationMinutes: number;
 };
 
+export type OperatingHoursInput = Omit<AvailabilityGenerationInput, "startDate" | "endDate">;
+
 export type GeneratedAvailabilitySlot = {
   slotDate: string;
   startTime: string;
@@ -30,6 +32,13 @@ function toUtcDate(value: string) {
     throw new Error("Informe um período válido para a agenda.");
   }
   return date;
+}
+
+export function withUpcomingAvailabilityPeriod(input: OperatingHoursInput, now = new Date()): AvailabilityGenerationInput {
+  const startDate = now.toISOString().slice(0, 10);
+  const end = new Date(`${startDate}T00:00:00.000Z`);
+  end.setUTCDate(end.getUTCDate() + 20);
+  return { ...input, startDate, endDate: end.toISOString().slice(0, 10) };
 }
 
 export function generateAvailabilitySlots(input: AvailabilityGenerationInput): GeneratedAvailabilitySlot[] {

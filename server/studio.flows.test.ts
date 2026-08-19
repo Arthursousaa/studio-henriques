@@ -145,10 +145,10 @@ describe("Studio Henriques core flows", () => {
     dbMocks.generateStudioAvailability.mockResolvedValue({ created: 18, total: 18 });
     dbMocks.closeStudioAvailabilityDate.mockResolvedValue(undefined);
     const caller = appRouter.createCaller(createContext("admin"));
-    const operatingHours = { startDate: "2026-08-20", endDate: "2026-08-31", weekdays: [1, 2, 3, 4, 5], startTime: "09:00", endTime: "18:00", durationMinutes: 60 as const };
+    const operatingHours = { weekdays: [1, 2, 3, 4, 5], startTime: "09:00", endTime: "18:00", durationMinutes: 60 as const };
 
     await expect(caller.admin.generateAvailability(operatingHours)).resolves.toEqual({ created: 18, total: 18 });
-    expect(dbMocks.generateStudioAvailability).toHaveBeenCalledWith(operatingHours);
+    expect(dbMocks.generateStudioAvailability).toHaveBeenCalledWith(expect.objectContaining(operatingHours));
     await expect(caller.admin.closeAvailabilityDate({ slotDate: "2026-08-28" })).resolves.toEqual({ success: true });
     expect(dbMocks.closeStudioAvailabilityDate).toHaveBeenCalledWith("2026-08-28");
   });

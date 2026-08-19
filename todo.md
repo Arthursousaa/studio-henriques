@@ -75,4 +75,10 @@
 - [x] Permitir que a administradora gere vários horários automaticamente a partir de dias, horário inicial, horário final e duração escolhidos.
 - [x] Permitir selecionar os dias de atendimento e ajustar exceções de disponibilidade sem cadastrar cada horário individualmente.
 - [x] Permitir que a administradora marque uma data inteira como fechada, preservando reservas já confirmadas.
-- [ ] Atualizar os testes e validar no site publicado a nova geração automática de horários.
+- [x] Atualizar os testes automatizados para a nova geração automática de horários.
+- [ ] Validar em produção a geração automática de horários pelo painel Cloudflare e confirmar que os horários aparecem no calendário público.
+- [ ] Validar em produção que uma reserva bloqueia o horário escolhido e impede conflito ou dupla reserva.
+- [x] Remover os campos de data inicial e final da configuração de funcionamento, mantendo apenas dias, abertura, fechamento e duração.
+- [x] Ajustar a geração automática para usar uma janela futura fixa e renovável sem exigir que a administradora escolha um período.
+- [ ] Atualizar os testes e publicar a configuração simplificada de horários.
+- [ ] Confirmar que o commit da configuração simplificada foi enviado ao GitHub e chegou ao endereço Cloudflare público.

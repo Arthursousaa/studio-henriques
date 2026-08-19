@@ -5,7 +5,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { SignJWT, jwtVerify } from "jose";
 import superjson from "superjson";
 import { z } from "zod";
-import { generateAvailabilitySlots } from "../shared/availabilityGenerator";
+import { generateAvailabilitySlots, withUpcomingAvailabilityPeriod } from "../shared/availabilityGenerator";
 
 export interface Env {
   ASSETS: Fetcher;
@@ -207,8 +207,6 @@ function toAvailabilitySlot(row: AvailabilitySlotRow) {
 const slotDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe uma data válida.");
 const slotTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Informe um horário válido.");
 const availabilityGenerationSchema = z.object({
-  startDate: slotDateSchema,
-  endDate: slotDateSchema,
   weekdays: z.array(z.number().int().min(0).max(6)).min(1).max(7),
   startTime: slotTimeSchema,
   endTime: slotTimeSchema,
@@ -398,7 +396,7 @@ const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         let slots;
         try {
-          slots = generateAvailabilitySlots(input);
+          slots = generateAvailabilitySlots(withUpcomingAvailabilityPeriod(input));
         } catch (error) {
           throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Não foi possível gerar os horários." });
         }
