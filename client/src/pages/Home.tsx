@@ -234,12 +234,15 @@ export default function Home() {
       <main>
         <section id="inicio" className="relative overflow-hidden bg-[#d9c0b0]">
           <img
-            src="/manus-storage/studio-henriques-hero_66b3ef02.jpg"
+            src="/manus-storage/studio-henriques-hero_d71539bc.jpg"
             alt="Atendimento de manicure em ambiente acolhedor"
             className="absolute inset-0 h-full w-full object-cover object-center"
+            onError={event => {
+              event.currentTarget.style.display = "none";
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#372720] via-[#372720]/90 to-[#372720]/10" />
-          <div className="container relative grid min-h-[620px] items-end py-16 sm:min-h-[660px] sm:py-20 lg:min-h-[690px]">
+          <div className="container relative grid min-h-[560px] items-end py-12 sm:min-h-[660px] sm:py-20 lg:min-h-[690px]">
             <div className="max-w-2xl text-[#fffaf2]">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#fffaf2]/30 bg-[#fffaf2]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] backdrop-blur-sm">
                 <Sparkles className="h-3.5 w-3.5" /> Seu momento de cuidado começa aqui

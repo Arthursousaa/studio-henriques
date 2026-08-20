@@ -80,5 +80,10 @@
 - [ ] Validar em produção que uma reserva bloqueia o horário escolhido e impede conflito ou dupla reserva.
 - [x] Remover os campos de data inicial e final da configuração de funcionamento, mantendo apenas dias, abertura, fechamento e duração.
 - [x] Ajustar a geração automática para usar uma janela futura fixa e renovável sem exigir que a administradora escolha um período.
-- [ ] Atualizar os testes e publicar a configuração simplificada de horários.
-- [ ] Confirmar que o commit da configuração simplificada foi enviado ao GitHub e chegou ao endereço Cloudflare público.
+- [x] Atualizar os testes automatizados da configuração simplificada de horários.
+- [ ] Validar no painel Cloudflare autenticado que a configuração simplificada está visível sem os campos De e Até.
+- [ ] Confirmar visualmente no painel que o deploy do commit 0ce2946 atualizou a configuração relevante da agenda.
+- [x] Corrigir o elemento visual quebrado exibido no centro da capa móvel.
+- [x] Validar visualmente em celular que a capa tem leitura, encaixe e conteúdo sem sobreposição ou quebra.
+- [ ] Publicar a correção da capa móvel e confirmar no endereço Cloudflare que a primeira seção está correta em celular.
+- [ ] Testar e publicar a correção visual da capa móvel.
