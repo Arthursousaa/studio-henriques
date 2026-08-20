@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS studio_closed_dates (
+  slot_date TEXT PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

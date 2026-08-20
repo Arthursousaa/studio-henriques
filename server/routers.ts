@@ -16,6 +16,7 @@ import {
   listStudioBookings,
   listStudioServices,
   listStudioUsers,
+  reopenStudioAvailabilityDate,
   scheduleStudioBooking,
   updateStudioBookingStatus,
   updateStudioAvailability,
@@ -129,6 +130,12 @@ export const appRouter = router({
       .input(z.object({ slotDate: slotDateSchema }))
       .mutation(async ({ input }) => {
         await closeStudioAvailabilityDate(input.slotDate);
+        return { success: true } as const;
+      }),
+    reopenAvailabilityDate: adminProcedure
+      .input(z.object({ slotDate: slotDateSchema }))
+      .mutation(async ({ input }) => {
+        await reopenStudioAvailabilityDate(input.slotDate);
         return { success: true } as const;
       }),
     updateAvailability: adminProcedure

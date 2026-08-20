@@ -87,3 +87,10 @@
 - [x] Validar visualmente em celular que a capa tem leitura, encaixe e conteúdo sem sobreposição ou quebra.
 - [ ] Publicar a correção da capa móvel e confirmar no endereço Cloudflare que a primeira seção está correta em celular.
 - [ ] Testar e publicar a correção visual da capa móvel.
+- [x] Remover do painel administrativo a lista extensa de horários individuais disponíveis.
+- [x] Validar e documentar no código e nos testes que o funcionamento padrão da agenda inicia aberto todos os dias, com abertura, fechamento e duração configuráveis.
+- [x] Registrar evidência explícita dos controles simples para alterar dias de funcionamento e fechar ou reabrir uma data sem excluir reservas.
+- [ ] Validar visualmente no painel Cloudflare que a agenda simplificada mostra o padrão diário e os controles de exceção esperados.
+- [ ] Validar e publicar o painel de agenda simplificado para celular.
+- [ ] Confirmar e documentar que o site completo, painel, banco e agenda seguem hospedados na Cloudflare sem depender do Manus para funcionar.
+- [ ] Conferir a publicação contínua do GitHub para a Cloudflare após cada nova atualização do código.

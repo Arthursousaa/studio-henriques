@@ -400,23 +400,47 @@ const appRouter = router({
         } catch (error) {
           throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Não foi possível gerar os horários." });
         }
+        const periodStart = slots[0]?.slotDate;
+        const periodEnd = slots.at(-1)?.slotDate;
+        if (!periodStart || !periodEnd) return { created: 0, total: 0 };
+
+        const closedDates = await ctx.env.DB.prepare("SELECT slot_date FROM studio_closed_dates WHERE slot_date BETWEEN ? AND ?")
+          .bind(periodStart, periodEnd)
+          .all<{ slot_date: string }>();
+        const closedDateSet = new Set(closedDates.results.map(row => row.slot_date));
+        const visibleSlots = slots.filter(slot => !closedDateSet.has(slot.slotDate));
+
+        await ctx.env.DB.prepare("DELETE FROM studio_availability_slots WHERE slot_date BETWEEN ? AND ? AND status = 'available'")
+          .bind(periodStart, periodEnd)
+          .run();
+
         let created = 0;
-        for (let index = 0; index < slots.length; index += 100) {
-          const batch = await ctx.env.DB.batch(slots.slice(index, index + 100).map(slot =>
+        for (let index = 0; index < visibleSlots.length; index += 100) {
+          const batch = await ctx.env.DB.batch(visibleSlots.slice(index, index + 100).map(slot =>
             ctx.env.DB.prepare("INSERT OR IGNORE INTO studio_availability_slots (slot_date, start_time, end_time, status) VALUES (?, ?, ?, 'available')")
               .bind(slot.slotDate, slot.startTime, slot.endTime),
           ));
           created += batch.reduce((count, result) => count + (result.meta.changes ?? 0), 0);
         }
-        return { created, total: slots.length };
+        return { created, total: visibleSlots.length };
       }),
     closeAvailabilityDate: adminProcedure
       .input(z.object({ slotDate: slotDateSchema }))
       .mutation(async ({ ctx, input }) => {
+        await ctx.env.DB.prepare("INSERT OR IGNORE INTO studio_closed_dates (slot_date) VALUES (?)").bind(input.slotDate).run();
         const update = await ctx.env.DB.prepare("UPDATE studio_availability_slots SET status = 'blocked', updated_at = CURRENT_TIMESTAMP WHERE slot_date = ? AND status = 'available'")
           .bind(input.slotDate)
           .run();
         return { success: true, blocked: update.meta.changes ?? 0 } as const;
+      }),
+    reopenAvailabilityDate: adminProcedure
+      .input(z.object({ slotDate: slotDateSchema }))
+      .mutation(async ({ ctx, input }) => {
+        await ctx.env.DB.prepare("DELETE FROM studio_closed_dates WHERE slot_date = ?").bind(input.slotDate).run();
+        const update = await ctx.env.DB.prepare("UPDATE studio_availability_slots SET status = 'available', updated_at = CURRENT_TIMESTAMP WHERE slot_date = ? AND status = 'blocked'")
+          .bind(input.slotDate)
+          .run();
+        return { success: true, reopened: update.meta.changes ?? 0 } as const;
       }),
     updateAvailability: adminProcedure
       .input(z.object({ id: z.number().int().positive(), status: z.enum(["available", "blocked"]) }))

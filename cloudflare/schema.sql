@@ -52,6 +52,11 @@ CREATE TABLE IF NOT EXISTS studio_availability_slots (
   UNIQUE(slot_date, start_time)
 );
 
+CREATE TABLE IF NOT EXISTS studio_closed_dates (
+  slot_date TEXT PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_studio_bookings_created_at ON studio_bookings(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_studio_services_active_order ON studio_services(is_active, sort_order);
 CREATE INDEX IF NOT EXISTS idx_studio_availability_slots_date_status ON studio_availability_slots(slot_date, status, start_time);

@@ -71,6 +71,11 @@ export const studioAvailabilitySlots = mysqlTable("studio_availability_slots", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const studioClosedDates = mysqlTable("studio_closed_dates", {
+  slotDate: varchar("slotDate", { length: 10 }).primaryKey(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const studioBookings = mysqlTable("studio_bookings", {
   id: int("id").autoincrement().primaryKey(),
   serviceId: int("serviceId").notNull(),

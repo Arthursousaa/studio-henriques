@@ -2,6 +2,7 @@ import { and, asc, desc, eq, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
+  studioClosedDates,
   studioAvailabilitySlots,
   studioBookings,
   studioServices,
@@ -252,9 +253,19 @@ export async function generateStudioAvailability(values: AvailabilityGenerationI
 export async function closeStudioAvailabilityDate(slotDate: string) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível");
+  await db.insert(studioClosedDates).values({ slotDate }).onDuplicateKeyUpdate({ set: { slotDate } });
   await db.update(studioAvailabilitySlots)
     .set({ status: "blocked" })
     .where(and(eq(studioAvailabilitySlots.slotDate, slotDate), eq(studioAvailabilitySlots.status, "available")));
+}
+
+export async function reopenStudioAvailabilityDate(slotDate: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível");
+  await db.delete(studioClosedDates).where(eq(studioClosedDates.slotDate, slotDate));
+  await db.update(studioAvailabilitySlots)
+    .set({ status: "available" })
+    .where(and(eq(studioAvailabilitySlots.slotDate, slotDate), eq(studioAvailabilitySlots.status, "blocked")));
 }
 
 export async function updateStudioAvailability(id: number, status: Exclude<AvailabilityStatus, "booked">) {
