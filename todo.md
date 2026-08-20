@@ -93,4 +93,9 @@
 - [ ] Validar visualmente no painel Cloudflare que a agenda simplificada mostra o padrão diário e os controles de exceção esperados.
 - [ ] Validar e publicar o painel de agenda simplificado para celular.
 - [x] Confirmar e documentar que o site completo, painel, banco e agenda seguem hospedados na Cloudflare sem depender do Manus para funcionar.
-- [x] Conferir a publicação contínua do GitHub para a Cloudflare após cada nova atualização do código.
+- [ ] Conferir a publicação contínua do GitHub para a Cloudflare após cada nova atualização do código.
+- [ ] Diagnosticar por que o endereço público da Cloudflare não abre para a proprietária.
+- [ ] Corrigir e validar o acesso externo ao site completo em celular e navegador público.
+- [ ] Diagnosticar a tela em branco ao abrir o site no Safari móvel.
+- [ ] Corrigir a entrega de arquivos e o cache para evitar falha de renderização em celular.
+- [ ] Publicar e confirmar visualmente o carregamento do site no Safari móvel.
