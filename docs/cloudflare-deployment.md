@@ -12,6 +12,12 @@
 - API para catálogo, pedidos de informação, atualização de preços, status de pedidos e permissões administrativas.
 - Autenticação independente por e-mail e senha, com sessão protegida por cookie HTTP-only.
 
+## Hospedagem independente e publicação contínua
+
+O site completo publicado em `studio-henriques.studiohenriques.workers.dev` é executado pela **Cloudflare Workers** e usa o banco **Cloudflare D1**. Portanto, o endereço público, o painel, a autenticação, a agenda e os dados não precisam que o Manus esteja aberto para continuarem funcionando.
+
+O código-fonte permanece no repositório público `Arthursousaa/studio-henriques`. Cada envio para a branch `main` aciona o workflow `.github/workflows/deploy-cloudflare.yml`, que compila a interface e publica o Worker e seus arquivos estáticos na Cloudflare. A atualização de funcionamento da agenda registrada no commit `46f26bb` foi publicada com sucesso por esse fluxo em 20 de agosto de 2026.
+
 ## Validação inicial
 
 Em 19 de agosto de 2026, o endereço público respondeu com `HTTP 200` após a propagação do certificado TLS. A página inicial carregou a navegação, a apresentação da Jaqueline, os filtros de categoria e os 29 serviços do catálogo carregados pelo Worker/D1.

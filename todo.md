@@ -92,5 +92,5 @@
 - [x] Registrar evidência explícita dos controles simples para alterar dias de funcionamento e fechar ou reabrir uma data sem excluir reservas.
 - [ ] Validar visualmente no painel Cloudflare que a agenda simplificada mostra o padrão diário e os controles de exceção esperados.
 - [ ] Validar e publicar o painel de agenda simplificado para celular.
-- [ ] Confirmar e documentar que o site completo, painel, banco e agenda seguem hospedados na Cloudflare sem depender do Manus para funcionar.
-- [ ] Conferir a publicação contínua do GitHub para a Cloudflare após cada nova atualização do código.
+- [x] Confirmar e documentar que o site completo, painel, banco e agenda seguem hospedados na Cloudflare sem depender do Manus para funcionar.
+- [x] Conferir a publicação contínua do GitHub para a Cloudflare após cada nova atualização do código.
