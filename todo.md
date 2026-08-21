@@ -94,11 +94,11 @@
 - [ ] Validar e publicar o painel de agenda simplificado para celular.
 - [x] Confirmar e documentar que o site completo, painel, banco e agenda seguem hospedados na Cloudflare sem depender do Manus para funcionar.
 - [ ] Conferir a publicação contínua do GitHub para a Cloudflare após cada nova atualização do código.
-- [ ] Diagnosticar por que o endereço público da Cloudflare não abre para a proprietária.
-- [ ] Corrigir e validar o acesso externo ao site completo em celular e navegador público.
-- [ ] Diagnosticar a tela em branco ao abrir o site no Safari móvel.
+- [x] Diagnosticar por que o endereço público da Cloudflare não abre para a proprietária.
+- [x] Corrigir e validar o acesso externo ao site completo em celular e navegador público.
+- [x] Diagnosticar a tela em branco ao abrir o site no Safari móvel.
 - [ ] Corrigir a entrega de arquivos e o cache para evitar falha de renderização em celular.
-- [ ] Publicar e confirmar visualmente o carregamento do site no Safari móvel.
+- [x] Publicar e confirmar visualmente o carregamento do site no Safari móvel.
 - [x] Adicionar filtros por categoria à seção de serviços e preços do painel administrativo.
 - [x] Reutilizar as categorias do catálogo público e manter a edição de preço, orçamento e visibilidade em cada filtro.
-- [ ] Cobrir os filtros de serviços do painel com testes e publicar a atualização na Cloudflare.
+- [x] Cobrir os filtros de serviços do painel com testes e publicar a atualização na Cloudflare.
