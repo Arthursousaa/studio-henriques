@@ -99,3 +99,6 @@
 - [ ] Diagnosticar a tela em branco ao abrir o site no Safari móvel.
 - [ ] Corrigir a entrega de arquivos e o cache para evitar falha de renderização em celular.
 - [ ] Publicar e confirmar visualmente o carregamento do site no Safari móvel.
+- [x] Adicionar filtros por categoria à seção de serviços e preços do painel administrativo.
+- [x] Reutilizar as categorias do catálogo público e manter a edição de preço, orçamento e visibilidade em cada filtro.
+- [ ] Cobrir os filtros de serviços do painel com testes e publicar a atualização na Cloudflare.

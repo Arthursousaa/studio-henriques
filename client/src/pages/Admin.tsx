@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatAppointmentSlot, whatsappConfirmationUrl } from "@/lib/appointmentConfirmation";
+import { ALL_SERVICE_CATEGORIES, filterServicesByCategory, getServiceCategories } from "@/lib/serviceFilters";
 import { trpc } from "@/lib/trpc";
 import {
   Ban,
@@ -74,6 +75,7 @@ function AdminContent() {
   const utils = trpc.useUtils();
   const [draftPrices, setDraftPrices] = useState<Record<number, string>>({});
   const [draftQuoteOnly, setDraftQuoteOnly] = useState<Record<number, boolean>>({});
+  const [selectedServiceCategory, setSelectedServiceCategory] = useState(ALL_SERVICE_CATEGORIES);
   const [generationDraft, setGenerationDraft] = useState(() => ({
     weekdays: [0, 1, 2, 3, 4, 5, 6] as number[],
     startTime: "09:00",
@@ -154,6 +156,11 @@ function AdminContent() {
   }, [servicesQuery.data]);
 
   const bookings = bookingsQuery.data ?? [];
+  const serviceCategories = useMemo(() => getServiceCategories(servicesQuery.data ?? []), [servicesQuery.data]);
+  const filteredServices = useMemo(
+    () => filterServicesByCategory(servicesQuery.data ?? [], selectedServiceCategory),
+    [selectedServiceCategory, servicesQuery.data],
+  );
   const stats = useMemo(() => ({
     pending: bookings.filter(booking => booking.status === "requested").length,
     confirmed: bookings.filter(booking => booking.status === "confirmed").length,
@@ -211,13 +218,32 @@ function AdminContent() {
       </section>
 
       <section className="rounded-[1.5rem] border border-[#342923]/10 bg-[#fffdf9] p-5 shadow-[0_20px_50px_-42px_rgba(60,37,30,0.48)] sm:p-7">
-        <div className="flex flex-col justify-between gap-3 border-b border-[#342923]/10 pb-5 sm:flex-row sm:items-center">
-          <div><div className="flex items-center gap-2"><Settings2 className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Serviços e preços</h2></div><p className="mt-1 text-sm text-[#705e56]">Edite os valores e defina o que ficará visível para as clientes.</p></div>
-          <Badge className="w-fit rounded-full bg-[#f3e4da] px-3 py-1 text-[#7e4c43] hover:bg-[#f3e4da]">Alterações aparecem no site</Badge>
-        </div>
-        <div className="mt-2 divide-y divide-[#342923]/10">
-          {servicesQuery.isLoading && <p className="py-8 text-sm text-[#705e56]">Carregando serviços...</p>}
-            {servicesQuery.data?.map(service => {
+          <div className="flex flex-col justify-between gap-3 border-b border-[#342923]/10 pb-5 sm:flex-row sm:items-center">
+            <div><div className="flex items-center gap-2"><Settings2 className="h-4 w-4 text-[#a4675d]" /><h2 className="font-serif text-2xl tracking-[-0.035em]">Serviços e preços</h2></div><p className="mt-1 text-sm text-[#705e56]">Edite os valores e defina o que ficará visível para as clientes.</p></div>
+            <Badge className="w-fit rounded-full bg-[#f3e4da] px-3 py-1 text-[#7e4c43] hover:bg-[#f3e4da]">Alterações aparecem no site</Badge>
+          </div>
+          <div className="mt-5 overflow-x-auto pb-1" aria-label="Filtros de serviços">
+            <div className="flex min-w-max gap-2">
+              {serviceCategories.map(category => {
+                const selected = selectedServiceCategory === category;
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setSelectedServiceCategory(category)}
+                    className={`h-9 rounded-full border px-4 text-sm font-semibold transition ${selected ? "border-[#5b3b35] bg-[#5b3b35] text-[#fffaf2]" : "border-[#342923]/15 bg-white text-[#705e56] hover:bg-[#f3e4da]"}`}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="mt-2 divide-y divide-[#342923]/10">
+            {servicesQuery.isLoading && <p className="py-8 text-sm text-[#705e56]">Carregando serviços...</p>}
+            {!servicesQuery.isLoading && filteredServices.length === 0 && <p className="py-8 text-sm text-[#705e56]">Não há serviços nesta categoria.</p>}
+            {filteredServices.map(service => {
               const draft = draftPrices[service.id] ?? service.price;
               const quoteOnly = draftQuoteOnly[service.id] ?? service.isPriceOnRequest;
               return (

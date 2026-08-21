@@ -19,6 +19,7 @@ vi.mock("@/components/DashboardLayout", () => ({
 }));
 
 const emptyQuery = { data: [], isLoading: false };
+const servicesQuery = { data: [] as Array<{ id: number; name: string; category: string; description: string; price: string; isPriceOnRequest: boolean; isActive: boolean }>, isLoading: false };
 const emptyMutation = { mutate: vi.fn(), isPending: false };
 vi.mock("@/lib/trpc", () => ({
   trpc: {
@@ -28,7 +29,7 @@ vi.mock("@/lib/trpc", () => ({
     }),
     admin: {
       access: { useQuery: () => ({ data: { isProjectOwner: true }, isLoading: false }) },
-      services: { useQuery: () => emptyQuery },
+      services: { useQuery: () => servicesQuery },
       bookings: { useQuery: () => ({ data: [{ id: 9, customerName: "Ana", customerPhone: "(11) 99999-9999", notes: null, status: "confirmed", createdAt: new Date(), serviceName: "Manicure", slotDate: "2026-08-20", startTime: "10:00", endTime: "11:00" }], isLoading: false }) },
       users: { useQuery: () => emptyQuery },
       availability: { useQuery: () => emptyQuery },
@@ -50,6 +51,7 @@ describe("agenda no painel administrativo", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    servicesQuery.data = [];
   });
 
   it("deixa o Studio aberto todos os dias por padrão, permite ajustar o funcionamento e fechar uma data", async () => {
@@ -72,5 +74,24 @@ describe("agenda no painel administrativo", () => {
     const confirmation = screen.getByRole("link", { name: /Preparar confirmação/i });
     expect(confirmation.getAttribute("href")).toContain("https://wa.me/5511999999999?text=");
     expect(confirmation.getAttribute("target")).toBe("_blank");
+  });
+
+  it("filtra os serviços por categoria sem esconder os controles de edição", async () => {
+    const user = userEvent.setup();
+    servicesQuery.data = [
+      { id: 1, name: "Manicure", category: "Unhas", description: "Cuidado das unhas.", price: "25", isPriceOnRequest: false, isActive: true },
+      { id: 2, name: "Massagem relaxante", category: "Massagens", description: "Relaxamento corporal.", price: "80", isPriceOnRequest: false, isActive: true },
+    ];
+    render(<Admin />);
+
+    expect(screen.getByRole("button", { name: "Todos" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("Manicure")).toBeTruthy();
+    expect(screen.getByText("Massagem relaxante")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Unhas" }));
+    expect(screen.getByRole("button", { name: "Unhas" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("Manicure")).toBeTruthy();
+    expect(screen.queryByText("Massagem relaxante")).toBeNull();
+    expect(screen.getByLabelText("Preço em R$", { selector: "input" })).toBeTruthy();
   });
 });
