@@ -76,6 +76,23 @@ function formatAppointment(slotDate: string, startTime: string, endTime: string)
   return `${label} às ${startTime}${endTime ? ` até ${endTime}` : ""}`;
 }
 
+export function bookingFormValidationMessage(form: InfoRequestForm, selectedService?: PublicStudioService) {
+  if (!selectedService) return "Escolha o serviço que deseja agendar.";
+  if (selectedService.category === "Depilação" && !form.depilationMethod) return "Escolha se prefere depilação por cera ou laser.";
+  if (!form.slotDate) return "Escolha uma data disponível no calendário.";
+  if (!form.availabilitySlotId) return "Escolha um horário disponível.";
+  if (form.customerName.trim().length < 2) return "Digite seu nome com pelo menos 2 letras.";
+  if (form.customerPhone.replace(/\D/g, "").length < 10) return "Digite um WhatsApp válido com DDD.";
+  return null;
+}
+
+export function bookingErrorMessage(message?: string) {
+  if (/customerName|too_small/i.test(message ?? "")) return "Digite seu nome com pelo menos 2 letras.";
+  if (/customerPhone|phone|WhatsApp/i.test(message ?? "")) return "Digite um WhatsApp válido com DDD.";
+  if (/availabilitySlotId|slotDate|horário/i.test(message ?? "")) return "Este horário não está mais disponível. Escolha outro horário.";
+  return "Não foi possível concluir o agendamento agora. Confira os dados e tente novamente.";
+}
+
 export function BookingConfirmation({ reservation, onAnotherBooking }: { reservation: ReservationConfirmation; onAnotherBooking: () => void }) {
   return (
     <div role="status" aria-live="polite" className="mt-7 rounded-2xl border-2 border-[#0abab5]/55 bg-[#e9fbf8] p-5 text-[#063f3e] shadow-[0_18px_35px_-28px_rgba(6,63,62,0.7)]">
@@ -144,7 +161,7 @@ export default function Home() {
   const availableDatesQuery = trpc.studio.availableDates.useQuery();
   const availabilityForDateQuery = trpc.studio.availabilityForDate.useQuery({ slotDate: form.slotDate }, { enabled: Boolean(form.slotDate) });
   const createBooking = trpc.studio.scheduleBooking.useMutation({
-    onError: error => toast.error(error.message || "Não foi possível concluir o agendamento."),
+    onError: error => toast.error(bookingErrorMessage(error.message)),
   });
 
   const services = servicesQuery.data ?? [];
@@ -168,15 +185,13 @@ export default function Home() {
 
   function handleBooking(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedService || !form.customerName || !form.customerPhone || !form.slotDate || !form.availabilitySlotId) {
-      toast.error("Escolha o serviço, a data, o horário e preencha seu nome e WhatsApp.");
+    const validationMessage = bookingFormValidationMessage(form, selectedService);
+    if (validationMessage) {
+      toast.error(validationMessage);
       return;
     }
 
-    if (selectedService.category === "Depilação" && !form["depilationMethod"]) {
-      toast.error("Escolha se prefere depilação por cera ou laser.");
-      return;
-    }
+    if (!selectedService) return;
 
     createBooking.mutate({
       availabilitySlotId: Number(form.availabilitySlotId),

@@ -77,6 +77,10 @@
 - [x] Cobrir por testes o link de WhatsApp e garantir que ele não envie mensagem sem o toque final da cliente.
 - [ ] Corrigir a tela “Agendamento confirmado” para exibir o botão de WhatsApp após uma reserva real em produção.
 - [x] Cobrir por teste a renderização do botão de mensagem pronta no estado de reserva concluída.
+- [x] Traduzir falhas de validação do formulário de agendamento para mensagens claras em português.
+- [x] Impedir que respostas técnicas do servidor sejam exibidas às clientes.
+- [x] Cobrir por testes a validação de nome, WhatsApp, serviço, data e horário antes da reserva.
+- [x] Adicionar testes explícitos para serviço, data e horário não selecionados no formulário de agendamento.
 - [ ] Validar em produção a agenda, a prevenção de dupla reserva e o botão de mensagem pronta antes de qualquer nova automação.
 - [x] Implementar confirmação gratuita na tela após a reserva e opção de abrir uma conversa do Studio no WhatsApp com dados pré-preenchidos, sem envio automático.
 - [x] Permitir que a administradora gere vários horários automaticamente a partir de dias, horário inicial, horário final e duração escolhidos.
