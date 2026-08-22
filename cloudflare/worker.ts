@@ -459,7 +459,7 @@ const appRouter = router({
         return { success: true } as const;
       }),
     bookings: adminProcedure.query(async ({ ctx }) => {
-      const result = await ctx.env.DB.prepare("SELECT b.id, b.customer_name AS customerName, b.customer_phone AS customerPhone, b.notes, b.scheduled_at AS scheduledAt, b.status, b.created_at AS createdAt, s.name AS serviceName, a.slot_date AS slotDate, a.start_time AS startTime, a.end_time AS endTime FROM studio_bookings b INNER JOIN studio_services s ON s.id = b.service_id LEFT JOIN studio_availability_slots a ON a.id = b.availability_slot_id ORDER BY CASE WHEN a.slot_date IS NULL THEN 1 ELSE 0 END, a.slot_date ASC, a.start_time ASC, b.created_at DESC").all();
+      const result = await ctx.env.DB.prepare("SELECT b.id, b.customer_name AS customerName, b.customer_phone AS customerPhone, b.notes, b.scheduled_at AS scheduledAt, b.status, b.confirmation_status AS confirmationStatus, b.confirmation_sent_at AS confirmationSentAt, b.created_at AS createdAt, s.name AS serviceName, a.slot_date AS slotDate, a.start_time AS startTime, a.end_time AS endTime FROM studio_bookings b INNER JOIN studio_services s ON s.id = b.service_id LEFT JOIN studio_availability_slots a ON a.id = b.availability_slot_id ORDER BY CASE WHEN a.slot_date IS NULL THEN 1 ELSE 0 END, a.slot_date ASC, a.start_time ASC, b.created_at DESC").all();
       return result.results;
     }),
     updateBookingStatus: adminProcedure

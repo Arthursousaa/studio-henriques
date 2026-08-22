@@ -69,8 +69,13 @@
 - [x] Criar estrutura de agenda para disponibilizar, bloquear e reservar horários sem conflito.
 - [x] Adicionar ao painel administrativo os controles para a proprietária abrir e ajustar datas e horários disponíveis.
 - [x] Criar o calendário público que mostra apenas horários livres e bloqueia horários já reservados.
-- [ ] Implementar confirmação de agendamento por WhatsApp com provedor oficial e configuração segura das credenciais.
-- [ ] Validar em produção a agenda, a prevenção de dupla reserva e as confirmações antes de ativar o envio real.
+- [x] Decidir não implementar confirmação automática por provedor oficial nesta etapa; o fluxo foi substituído pela mensagem pronta enviada manualmente pela cliente.
+- [x] Decidir não usar identificação de teste, webhook, lista de destinatários ou resposta automática neste fluxo simplificado.
+- [x] Decidir não configurar provedor alternativo devido ao CAPTCHA; nenhum número de teste, número da Jaqueline ou cliente receberá mensagem automática.
+- [x] Remover o código de confirmação automática ainda não publicado e preservar apenas o fluxo de WhatsApp iniciado pela cliente.
+- [x] Exibir, após a reserva, um botão claro que abre o WhatsApp da Jaqueline com serviço, data e horário já preenchidos.
+- [x] Cobrir por testes o link de WhatsApp e garantir que ele não envie mensagem sem o toque final da cliente.
+- [ ] Validar em produção a agenda, a prevenção de dupla reserva e o botão de mensagem pronta antes de qualquer nova automação.
 - [x] Implementar confirmação gratuita na tela após a reserva e opção de abrir uma conversa do Studio no WhatsApp com dados pré-preenchidos, sem envio automático.
 - [x] Permitir que a administradora gere vários horários automaticamente a partir de dias, horário inicial, horário final e duração escolhidos.
 - [x] Permitir selecionar os dias de atendimento e ajustar exceções de disponibilidade sem cadastrar cada horário individualmente.
@@ -109,5 +114,7 @@
 - [ ] Validar a identidade Tiffany em Safari móvel ou ambiente equivalente, registrando carregamento, navegação e legibilidade.
 - [ ] Registrar em Safari/WebKit a verificação da capa, catálogo, calendário, formulário e login administrativo na nova identidade Tiffany.
 - [x] Registrar teste objetivo de contraste para os pares de texto e fundo principais da identidade Tiffany.
-- [ ] Corrigir a foto da capa Tiffany que não carrega no endereço público Cloudflare.
-- [ ] Validar a foto da capa em desktop e celular após a publicação da correção.
+- [x] Corrigir a foto da capa Tiffany que não carrega no endereço público Cloudflare.
+- [x] Validar a foto da capa em desktop e celular após a publicação da correção.
+- [x] Validar no endereço público Cloudflare, em viewport móvel, que a foto de capa Tiffany carrega corretamente.
+- [x] Validar explicitamente no endereço público Cloudflare, em desktop, que a foto da capa Tiffany carrega corretamente após a publicação da correção e registrar a evidência.

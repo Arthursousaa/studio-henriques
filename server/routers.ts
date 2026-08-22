@@ -150,7 +150,10 @@ export const appRouter = router({
         await deleteStudioAvailability(input.id);
         return { success: true } as const;
       }),
-    bookings: adminProcedure.query(() => listStudioBookings()),
+    bookings: adminProcedure.query(async () => {
+      const bookings = await listStudioBookings();
+      return bookings.map(booking => ({ ...booking, confirmationStatus: "not_requested" }));
+    }),
     updateBookingStatus: adminProcedure
       .input(
         z.object({

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { buildInfoRequestNotes, selectServiceForInfoRequest } from "@/lib/infoRequestSelection";
+import { whatsappBookingRequestUrl } from "@/lib/appointmentConfirmation";
 import { formatServicePrice } from "@/lib/servicePresentation";
 import { filterServicesByCategory, getServiceCategories } from "@/lib/serviceFilters";
 import { trpc } from "@/lib/trpc";
@@ -375,7 +376,7 @@ export default function Home() {
             </div>
 
             <form onSubmit={handleBooking} className="rounded-[1.75rem] border border-[#342923]/10 bg-[#fffdf9] p-6 shadow-[0_25px_60px_-40px_rgba(60,37,30,0.55)] sm:p-8">
-              {reservationConfirmation && <div className="mb-6 rounded-2xl border border-[#a8caa8] bg-[#eff7ed] p-5 text-[#315d37]"><div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#d3e9d0]"><Check className="h-5 w-5" /></span><div><p className="font-semibold">Agendamento reservado, {reservationConfirmation.customerName}.</p><p className="mt-1 text-sm leading-6">{reservationConfirmation.serviceName} · <span className="capitalize">{formatAppointment(reservationConfirmation.slotDate, reservationConfirmation.startTime, reservationConfirmation.endTime)}</span></p><p className="mt-2 text-xs leading-5">A Jaqueline terá seus dados no painel e poderá confirmar os detalhes pelo WhatsApp informado.</p></div></div></div>}
+              {reservationConfirmation && <div className="mb-6 rounded-2xl border border-[#7fc7c0] bg-[#e9fbf8] p-5 text-[#063f3e]"><div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#c9f3ee]"><Check className="h-5 w-5" /></span><div><p className="font-semibold">Agendamento reservado, {reservationConfirmation.customerName}.</p><p className="mt-1 text-sm leading-6">{reservationConfirmation.serviceName} · <span className="capitalize">{formatAppointment(reservationConfirmation.slotDate, reservationConfirmation.startTime, reservationConfirmation.endTime)}</span></p><p className="mt-2 text-xs leading-5">Para avisar a Jaqueline, abra o WhatsApp com sua mensagem pronta. Ela só será enviada se você tocar em enviar no WhatsApp.</p><a href={whatsappBookingRequestUrl(reservationConfirmation)} target="_blank" rel="noreferrer" className="mt-4 inline-flex h-10 items-center rounded-full bg-[#063f3e] px-4 text-sm font-semibold text-[#fffaf2] transition hover:bg-[#0f5f5b]"><MessageCircle className="mr-2 h-4 w-4" />Avisar a Jaqueline no WhatsApp</a></div></div></div>}
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="service" className="text-sm font-semibold">Qual serviço você deseja?</Label>
