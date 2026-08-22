@@ -234,7 +234,7 @@ export default function Home() {
       <main>
         <section id="inicio" className="relative overflow-hidden bg-[#0f5f5b]">
           <img
-            src="/manus-storage/studio-henriques-hero_d71539bc.jpg"
+            src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=1920&q=85"
             alt="Atendimento de manicure em ambiente acolhedor"
             className="absolute inset-0 h-full w-full object-cover object-center"
             onError={event => {

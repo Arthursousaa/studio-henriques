@@ -109,3 +109,5 @@
 - [ ] Validar a identidade Tiffany em Safari móvel ou ambiente equivalente, registrando carregamento, navegação e legibilidade.
 - [ ] Registrar em Safari/WebKit a verificação da capa, catálogo, calendário, formulário e login administrativo na nova identidade Tiffany.
 - [x] Registrar teste objetivo de contraste para os pares de texto e fundo principais da identidade Tiffany.
+- [ ] Corrigir a foto da capa Tiffany que não carrega no endereço público Cloudflare.
+- [ ] Validar a foto da capa em desktop e celular após a publicação da correção.
