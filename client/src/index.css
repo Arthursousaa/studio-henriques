@@ -45,39 +45,45 @@
 }
 
 :root {
-  --primary: oklch(0.37 0.055 32);
-  --primary-foreground: oklch(0.98 0.015 70);
-  --sidebar-primary: oklch(0.37 0.055 32);
-  --sidebar-primary-foreground: oklch(0.98 0.015 70);
-  --chart-1: oklch(0.74 0.075 28);
-  --chart-2: oklch(0.62 0.075 31);
-  --chart-3: oklch(0.49 0.07 33);
-  --chart-4: oklch(0.37 0.055 32);
-  --chart-5: oklch(0.28 0.04 34);
+  --studio-tiffany: #0abab5;
+  --studio-tiffany-dark: #0f5f5b;
+  --studio-tiffany-deep: #063f3e;
+  --studio-tiffany-mist: #e5fbf8;
+  --studio-tiffany-soft: #f4fffd;
+  --studio-gold: #f2d783;
+  --primary: oklch(0.51 0.11 191);
+  --primary-foreground: oklch(0.99 0.006 185);
+  --sidebar-primary: oklch(0.51 0.11 191);
+  --sidebar-primary-foreground: oklch(0.99 0.006 185);
+  --chart-1: oklch(0.78 0.11 190);
+  --chart-2: oklch(0.64 0.12 191);
+  --chart-3: oklch(0.51 0.11 191);
+  --chart-4: oklch(0.39 0.085 191);
+  --chart-5: oklch(0.3 0.06 191);
   --radius: 0.8rem;
-  --background: oklch(0.98 0.012 75);
-  --foreground: oklch(0.25 0.025 55);
-  --card: oklch(0.995 0.008 75);
-  --card-foreground: oklch(0.25 0.025 55);
-  --popover: oklch(0.995 0.008 75);
-  --popover-foreground: oklch(0.25 0.025 55);
-  --secondary: oklch(0.94 0.025 57);
-  --secondary-foreground: oklch(0.34 0.035 48);
-  --muted: oklch(0.95 0.017 64);
-  --muted-foreground: oklch(0.49 0.03 50);
-  --accent: oklch(0.94 0.025 57);
-  --accent-foreground: oklch(0.3 0.03 50);
+  --background: oklch(0.985 0.009 185);
+  --foreground: oklch(0.28 0.045 190);
+  --card: oklch(0.998 0.003 185);
+  --card-foreground: oklch(0.28 0.045 190);
+  --popover: oklch(0.998 0.003 185);
+  --popover-foreground: oklch(0.28 0.045 190);
+  --secondary: oklch(0.94 0.035 188);
+  --secondary-foreground: oklch(0.34 0.06 190);
+  --muted: oklch(0.95 0.023 186);
+  --muted-foreground: oklch(0.49 0.035 190);
+  --accent: oklch(0.94 0.035 188);
+  --accent-foreground: oklch(0.3 0.06 190);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.86 0.02 58);
-  --input: oklch(0.86 0.02 58);
-  --ring: oklch(0.58 0.075 30);
-  --sidebar: oklch(0.98 0.012 75);
-  --sidebar-foreground: oklch(0.25 0.025 55);
-  --sidebar-accent: oklch(0.94 0.025 57);
-  --sidebar-accent-foreground: oklch(0.3 0.03 50);
-  --sidebar-border: oklch(0.86 0.02 58);
-  --sidebar-ring: oklch(0.58 0.075 30);
+  --border: oklch(0.86 0.035 188);
+  --input: oklch(0.86 0.035 188);
+  --ring: oklch(0.61 0.12 191);
+  --sidebar: oklch(0.985 0.009 185);
+  --sidebar-foreground: oklch(0.28 0.045 190);
+  --sidebar-accent: oklch(0.94 0.035 188);
+  --sidebar-accent-foreground: oklch(0.3 0.06 190);
+  --sidebar-border: oklch(0.86 0.035 188);
+  --sidebar-ring: oklch(0.61 0.12 191);
 }
 
 .dark {
@@ -177,3 +183,33 @@
     }
   }
 }
+
+/* Identidade Studio Henriques — escala Tiffany aplicada aos utilitários legados. */
+.bg-\[\#5b3b35\] { background-color: var(--studio-tiffany-dark) !important; }
+.hover\:bg-\[\#754d45\]:hover { background-color: var(--studio-tiffany-deep) !important; }
+.text-\[\#5b3b35\] { color: var(--studio-tiffany-dark) !important; }
+.border-\[\#5b3b35\] { border-color: var(--studio-tiffany-dark) !important; }
+.border-\[\#5b3b35\]\/15 { border-color: color-mix(in srgb, var(--studio-tiffany-dark) 15%, transparent) !important; }
+.text-\[\#a4675d\] { color: var(--studio-tiffany) !important; }
+.hover\:text-\[\#a4675d\]:hover { color: var(--studio-tiffany) !important; }
+.hover\:text-\[\#5b3b35\]:hover { color: var(--studio-tiffany-dark) !important; }
+.border-\[\#a4675d\]\/30 { border-color: color-mix(in srgb, var(--studio-tiffany) 30%, transparent) !important; }
+.hover\:border-\[\#a4675d\]\/30:hover,
+.hover\:border-\[\#a4675d\]\/50:hover,
+.focus\:border-\[\#a4675d\]:focus { border-color: var(--studio-tiffany) !important; }
+.bg-\[\#fbf8f3\],
+.bg-\[\#fffdf9\],
+.bg-\[\#fdfaf7\] { background-color: var(--studio-tiffany-soft) !important; }
+.bg-\[\#f5ede5\],
+.bg-\[\#f3e4da\] { background-color: var(--studio-tiffany-mist) !important; }
+.hover\:bg-\[\#f3e4da\]:hover { background-color: #d7f6f2 !important; }
+.bg-\[\#f2e2d7\] { background-color: #cdf4ef !important; }
+.text-\[\#94594e\] { color: var(--studio-tiffany-dark) !important; }
+.bg-\[\#8fcfc7\] { background-color: #a8e5df !important; }
+.text-\[\#342923\] { color: #173f3c !important; }
+.border-\[\#342923\]\/10 { border-color: rgb(23 63 60 / 10%) !important; }
+.border-\[\#342923\]\/15 { border-color: rgb(23 63 60 / 15%) !important; }
+.text-\[\#705e56\],
+.text-\[\#8a756d\] { color: #5b7774 !important; }
+.focus-visible\:ring-\[\#dcb4a4\]:focus-visible,
+.focus\:ring-\[\#dcb4a4\]\/40:focus { --tw-ring-color: rgb(10 186 181 / 40%) !important; }

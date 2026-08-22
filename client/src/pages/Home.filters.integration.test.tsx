@@ -71,6 +71,6 @@ describe("filtro de serviços e pedido de informações", () => {
     await user.click(within(axilaCard as HTMLElement).getByRole("button", { name: /Escolher opção/i }));
 
     expect((screen.getByLabelText("Qual serviço você deseja?") as HTMLSelectElement).value).toBe("14");
-    expect(screen.getByRole("button", { name: "Laser" }).className).toContain("bg-[#5b3b35]");
+    expect(screen.getByRole("button", { name: "Laser" }).getAttribute("aria-pressed")).toBe("true");
   });
 });

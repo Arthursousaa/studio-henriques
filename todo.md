@@ -102,3 +102,7 @@
 - [x] Adicionar filtros por categoria à seção de serviços e preços do painel administrativo.
 - [x] Reutilizar as categorias do catálogo público e manter a edição de preço, orçamento e visibilidade em cada filtro.
 - [x] Cobrir os filtros de serviços do painel com testes e publicar a atualização na Cloudflare.
+- [x] Definir e aplicar a identidade visual azul Tiffany no site público publicado na Cloudflare.
+- [x] Atualizar capa, serviços, calendário, formulário, confirmação e rodapé preservando o agendamento atual.
+- [x] Atualizar login e painel administrativo com a mesma escala Tiffany sem alterar controles ou permissões.
+- [ ] Validar contraste, responsividade e Safari móvel, executar testes e publicar a nova identidade visual na Cloudflare.

@@ -232,7 +232,7 @@ export default function Home() {
       </header>
 
       <main>
-        <section id="inicio" className="relative overflow-hidden bg-[#d9c0b0]">
+        <section id="inicio" className="relative overflow-hidden bg-[#0f5f5b]">
           <img
             src="/manus-storage/studio-henriques-hero_d71539bc.jpg"
             alt="Atendimento de manicure em ambiente acolhedor"
@@ -241,7 +241,7 @@ export default function Home() {
               event.currentTarget.style.display = "none";
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#372720] via-[#372720]/90 to-[#372720]/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#063f3e] via-[#0f5f5b]/90 to-[#0abab5]/25" />
           <div className="container relative grid min-h-[560px] items-end py-12 sm:min-h-[660px] sm:py-20 lg:min-h-[690px]">
             <div className="max-w-2xl text-[#fffaf2]">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#fffaf2]/30 bg-[#fffaf2]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] backdrop-blur-sm">
@@ -393,7 +393,7 @@ export default function Home() {
                     <Label className="text-sm font-semibold">Qual método de depilação você prefere?</Label>
                     <div className="mt-2 grid grid-cols-2 gap-3">
                       {(["Cera", "Laser"] as const).map(method => (
-                        <button type="button" key={method} onClick={() => updateForm("depilationMethod", method)} className={`h-11 rounded-xl border text-sm font-semibold transition ${form["depilationMethod"] === method ? "border-[#5b3b35] bg-[#5b3b35] text-[#fffaf2]" : "border-[#342923]/15 bg-white text-[#705e56] hover:border-[#a4675d]/50 hover:text-[#5b3b35]"}`}>{method}</button>
+                        <button type="button" key={method} aria-pressed={form["depilationMethod"] === method} onClick={() => updateForm("depilationMethod", method)} className={`h-11 rounded-xl border text-sm font-semibold transition ${form["depilationMethod"] === method ? "border-[#5b3b35] bg-[#5b3b35] text-[#fffaf2]" : "border-[#342923]/15 bg-white text-[#705e56] hover:border-[#a4675d]/50 hover:text-[#5b3b35]"}`}>{method}</button>
                       ))}
                     </div>
                     {form["depilationMethod"] === "Laser" && <p className="mt-2 text-xs leading-5 text-[#705e56]">Os valores de depilação a laser são informados pelo Studio conforme a área e a disponibilidade.</p>}
