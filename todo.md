@@ -106,3 +106,6 @@
 - [x] Atualizar capa, serviços, calendário, formulário, confirmação e rodapé preservando o agendamento atual.
 - [x] Atualizar login e painel administrativo com a mesma escala Tiffany sem alterar controles ou permissões.
 - [ ] Validar contraste, responsividade e Safari móvel, executar testes e publicar a nova identidade visual na Cloudflare.
+- [ ] Validar a identidade Tiffany em Safari móvel ou ambiente equivalente, registrando carregamento, navegação e legibilidade.
+- [ ] Registrar em Safari/WebKit a verificação da capa, catálogo, calendário, formulário e login administrativo na nova identidade Tiffany.
+- [x] Registrar teste objetivo de contraste para os pares de texto e fundo principais da identidade Tiffany.
