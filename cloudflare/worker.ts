@@ -6,6 +6,7 @@ import { SignJWT, jwtVerify } from "jose";
 import superjson from "superjson";
 import { z } from "zod";
 import { generateAvailabilitySlots, withUpcomingAvailabilityPeriod } from "../shared/availabilityGenerator";
+import { filterVisibleAvailabilitySlots, isAvailabilitySlotVisible } from "../shared/availabilityVisibility";
 
 export interface Env {
   ASSETS: Fetcher;
@@ -331,14 +332,14 @@ const appRouter = router({
   studio: router({
     services: publicProcedure.query(({ ctx }) => listServices(ctx.env)),
     availableDates: publicProcedure.query(async ({ ctx }) => {
-      const result = await ctx.env.DB.prepare("SELECT DISTINCT slot_date FROM studio_availability_slots WHERE status = 'available' AND slot_date >= date('now', '-1 day') ORDER BY slot_date ASC LIMIT 90").all<{ slot_date: string }>();
-      return result.results.map(row => row.slot_date);
+      const result = await ctx.env.DB.prepare("SELECT slot_date, start_time FROM studio_availability_slots WHERE status = 'available' AND slot_date >= date('now', '-1 day') ORDER BY slot_date ASC, start_time ASC LIMIT 500").all<Pick<AvailabilitySlotRow, "slot_date" | "start_time">>();
+      return Array.from(new Set(filterVisibleAvailabilitySlots(result.results.map(slot => ({ slotDate: slot.slot_date, startTime: slot.start_time }))).map(slot => slot.slotDate)));
     }),
     availabilityForDate: publicProcedure
       .input(z.object({ slotDate: slotDateSchema }))
       .query(async ({ ctx, input }) => {
         const result = await ctx.env.DB.prepare("SELECT * FROM studio_availability_slots WHERE slot_date = ? AND status = 'available' ORDER BY start_time ASC").bind(input.slotDate).all<AvailabilitySlotRow>();
-        return result.results.map(toAvailabilitySlot);
+        return filterVisibleAvailabilitySlots(result.results.map(toAvailabilitySlot));
       }),
     scheduleBooking: publicProcedure
       .input(z.object({ availabilitySlotId: z.number().int().positive(), serviceId: z.number().int().positive(), customerName: z.string().trim().min(2).max(120), customerPhone: z.string().trim().min(8).max(24), notes: z.string().trim().max(600).optional() }))
@@ -348,6 +349,7 @@ const appRouter = router({
         if (!service || !service.is_active) throw new TRPCError({ code: "BAD_REQUEST", message: "Este serviço não está disponível no momento." });
         const slot = await ctx.env.DB.prepare("SELECT * FROM studio_availability_slots WHERE id = ? LIMIT 1").bind(input.availabilitySlotId).first<AvailabilitySlotRow>();
         if (!slot || slot.status !== "available") throw new TRPCError({ code: "CONFLICT", message: "Este horário acabou de ser reservado. Escolha outro horário disponível." });
+        if (!isAvailabilitySlotVisible(toAvailabilitySlot(slot))) throw new TRPCError({ code: "BAD_REQUEST", message: "Este horário já passou. Escolha outro horário disponível." });
         const reservation = await ctx.env.DB.prepare("UPDATE studio_availability_slots SET status = 'booked', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'available'")
           .bind(input.availabilitySlotId)
           .run();

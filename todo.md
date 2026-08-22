@@ -34,6 +34,8 @@
 - [x] Adicionar teste de integração confirmando que, ao clicar em um serviço filtrado, o formulário recebe esse serviço pré-selecionado.
 - [x] Adicionar teste de interface da Home que selecione uma categoria, clique em um cartão filtrado e confira o serviço no formulário exibido.
 - [ ] Personalizar o endereço público do site com o nome escolhido pela proprietária ou conectar um domínio próprio.
+- [x] Verificar e, se disponível, alterar o subdomínio gratuito Cloudflare para uma versão mais curta do nome Studio Henriques.
+- [x] Verificar e, se disponível, publicar o site em um subdomínio gratuito como agenda.studiohenriques.workers.dev, sem repetir “Studio Henriques”.
 - [ ] Conectar e validar o domínio escolhido studiohenriques.com.br após compra ou disponibilidade da proprietária.
 - [x] Comparar hospedagens gratuitas que possam suportar uma futura migração do site completo com servidor, banco de dados e painel administrativo.
 - [x] Criar uma versão estática para GitHub Pages com apresentação, catálogo filtrável, preços e contatos do Studio Henriques.
@@ -69,6 +71,8 @@
 - [x] Criar estrutura de agenda para disponibilizar, bloquear e reservar horários sem conflito.
 - [x] Adicionar ao painel administrativo os controles para a proprietária abrir e ajustar datas e horários disponíveis.
 - [x] Criar o calendário público que mostra apenas horários livres e bloqueia horários já reservados.
+- [x] Ocultar no calendário público os horários que já passaram no dia atual, usando o fuso horário do Studio.
+- [x] Cobrir por teste os horários futuros, o horário atual e os horários passados na data atual.
 - [x] Decidir não implementar confirmação automática por provedor oficial nesta etapa; o fluxo foi substituído pela mensagem pronta enviada manualmente pela cliente.
 - [x] Decidir não usar identificação de teste, webhook, lista de destinatários ou resposta automática neste fluxo simplificado.
 - [x] Decidir não configurar provedor alternativo devido ao CAPTCHA; nenhum número de teste, número da Jaqueline ou cliente receberá mensagem automática.

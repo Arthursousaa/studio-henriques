@@ -10,6 +10,7 @@ import {
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { generateAvailabilitySlots, type AvailabilityGenerationInput } from "../shared/availabilityGenerator";
+import { filterVisibleAvailabilitySlots } from "../shared/availabilityVisibility";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -217,17 +218,18 @@ export async function listStudioAvailability() {
   return db.select().from(studioAvailabilitySlots).orderBy(asc(studioAvailabilitySlots.slotDate), asc(studioAvailabilitySlots.startTime));
 }
 
-export async function listAvailableStudioDates() {
+export async function listAvailableStudioDates(now = new Date()) {
   const slots = await listStudioAvailability();
-  return Array.from(new Set(slots.filter(slot => slot.status === "available").map(slot => slot.slotDate)));
+  return Array.from(new Set(filterVisibleAvailabilitySlots(slots.filter(slot => slot.status === "available"), now).map(slot => slot.slotDate)));
 }
 
-export async function listAvailableStudioAvailabilityForDate(slotDate: string) {
+export async function listAvailableStudioAvailabilityForDate(slotDate: string, now = new Date()) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(studioAvailabilitySlots)
+  const slots = await db.select().from(studioAvailabilitySlots)
     .where(and(eq(studioAvailabilitySlots.slotDate, slotDate), eq(studioAvailabilitySlots.status, "available")))
     .orderBy(asc(studioAvailabilitySlots.startTime));
+  return filterVisibleAvailabilitySlots(slots, now);
 }
 
 export async function createStudioAvailability(values: { slotDate: string; startTime: string; endTime: string }) {
