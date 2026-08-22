@@ -76,6 +76,25 @@ function formatAppointment(slotDate: string, startTime: string, endTime: string)
   return `${label} às ${startTime}${endTime ? ` até ${endTime}` : ""}`;
 }
 
+export function BookingConfirmation({ reservation, onAnotherBooking }: { reservation: ReservationConfirmation; onAnotherBooking: () => void }) {
+  return (
+    <div role="status" aria-live="polite" className="mt-7 rounded-2xl border-2 border-[#0abab5]/55 bg-[#e9fbf8] p-5 text-[#063f3e] shadow-[0_18px_35px_-28px_rgba(6,63,62,0.7)]">
+      <div className="flex items-start gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#c9f3ee]"><Check className="h-5 w-5" /></span>
+        <div className="min-w-0">
+          <p className="font-semibold">Agendamento confirmado, {reservation.customerName}.</p>
+          <p className="mt-1 text-sm leading-6">{reservation.serviceName} · <span className="capitalize">{formatAppointment(reservation.slotDate, reservation.startTime, reservation.endTime)}</span></p>
+          <p className="mt-3 text-sm leading-6">Agora toque no botão abaixo para abrir o WhatsApp com sua mensagem pronta. Ela só será enviada quando você tocar em <strong>Enviar</strong> no WhatsApp.</p>
+          <a href={whatsappBookingRequestUrl(reservation)} target="_blank" rel="noreferrer" className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[#063f3e] px-5 text-center text-sm font-semibold text-[#fffaf2] shadow-sm transition hover:bg-[#0f5f5b] active:scale-[0.98] sm:w-auto">
+            <MessageCircle className="mr-2 h-5 w-5" /> Abrir WhatsApp com mensagem pronta
+          </a>
+          <button type="button" onClick={onAnotherBooking} className="mt-4 block text-sm font-semibold text-[#063f3e] underline-offset-4 hover:underline">Fazer outro agendamento</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ServiceIcon({ slug }: { slug: string }) {
   const className = "h-5 w-5";
   if (slug === "sobrancelhas") return <Eye className={className} />;
@@ -376,7 +395,6 @@ export default function Home() {
             </div>
 
             <form onSubmit={handleBooking} className="rounded-[1.75rem] border border-[#342923]/10 bg-[#fffdf9] p-6 shadow-[0_25px_60px_-40px_rgba(60,37,30,0.55)] sm:p-8">
-              {reservationConfirmation && <div className="mb-6 rounded-2xl border border-[#7fc7c0] bg-[#e9fbf8] p-5 text-[#063f3e]"><div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#c9f3ee]"><Check className="h-5 w-5" /></span><div><p className="font-semibold">Agendamento reservado, {reservationConfirmation.customerName}.</p><p className="mt-1 text-sm leading-6">{reservationConfirmation.serviceName} · <span className="capitalize">{formatAppointment(reservationConfirmation.slotDate, reservationConfirmation.startTime, reservationConfirmation.endTime)}</span></p><p className="mt-2 text-xs leading-5">Para avisar a Jaqueline, abra o WhatsApp com sua mensagem pronta. Ela só será enviada se você tocar em enviar no WhatsApp.</p><a href={whatsappBookingRequestUrl(reservationConfirmation)} target="_blank" rel="noreferrer" className="mt-4 inline-flex h-10 items-center rounded-full bg-[#063f3e] px-4 text-sm font-semibold text-[#fffaf2] transition hover:bg-[#0f5f5b]"><MessageCircle className="mr-2 h-4 w-4" />Avisar a Jaqueline no WhatsApp</a></div></div></div>}
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="service" className="text-sm font-semibold">Qual serviço você deseja?</Label>
@@ -429,10 +447,16 @@ export default function Home() {
                   <Textarea id="notes" value={form.notes} onChange={event => updateForm("notes", event.target.value)} maxLength={600} placeholder="Conte qualquer detalhe que a Jaqueline deve saber." className="mt-2 min-h-24 resize-y rounded-xl border-[#342923]/15 bg-white focus-visible:ring-[#dcb4a4]" />
                 </div>
               </div>
-              <Button type="submit" disabled={createBooking.isPending || servicesQuery.isLoading || availableDatesQuery.isLoading} className="mt-7 h-12 w-full rounded-full bg-[#5b3b35] text-sm font-semibold text-[#fffaf2] hover:bg-[#754d45] active:scale-[0.98]">
-                <CalendarDays className="mr-2 h-4 w-4" /> {createBooking.isPending ? "Reservando horário..." : "Confirmar agendamento"}
-              </Button>
-              <p className="mt-3 text-center text-xs leading-5 text-[#8a756d]">Ao confirmar, este horário será reservado e deixará de aparecer para outras clientes.</p>
+              {reservationConfirmation ? (
+                <BookingConfirmation reservation={reservationConfirmation} onAnotherBooking={() => setReservationConfirmation(null)} />
+              ) : (
+                <>
+                  <Button type="submit" disabled={createBooking.isPending || servicesQuery.isLoading || availableDatesQuery.isLoading} className="mt-7 h-12 w-full rounded-full bg-[#5b3b35] text-sm font-semibold text-[#fffaf2] hover:bg-[#754d45] active:scale-[0.98]">
+                    <CalendarDays className="mr-2 h-4 w-4" /> {createBooking.isPending ? "Reservando horário..." : "Confirmar agendamento"}
+                  </Button>
+                  <p className="mt-3 text-center text-xs leading-5 text-[#8a756d]">Ao confirmar, este horário será reservado e deixará de aparecer para outras clientes.</p>
+                </>
+              )}
             </form>
           </div>
         </section>

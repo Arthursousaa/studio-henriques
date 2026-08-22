@@ -22,14 +22,20 @@ vi.mock("@/lib/trpc", () => ({
       services: { useQuery: () => ({ data: services, isLoading: false }) },
       availableDates: { useQuery: () => ({ data: availableDates, isLoading: false, refetch: vi.fn() }) },
       availabilityForDate: { useQuery: () => ({ data: availableSlots, isLoading: false, refetch: vi.fn() }) },
-      scheduleBooking: { useMutation: () => ({ mutate: requestInformation, isPending: false }) },
+      scheduleBooking: { useMutation: () => ({
+        mutate: (input: unknown, options?: { onSuccess?: (result: typeof availableSlots[number]) => void }) => {
+          requestInformation(input);
+          options?.onSuccess?.(availableSlots[0]);
+        },
+        isPending: false,
+      }) },
     },
   },
 }));
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-import Home from "./Home";
+import Home, { BookingConfirmation } from "./Home";
 
 describe("filtro de serviços e pedido de informações", () => {
   beforeEach(() => {
@@ -72,5 +78,23 @@ describe("filtro de serviços e pedido de informações", () => {
 
     expect((screen.getByLabelText("Qual serviço você deseja?") as HTMLSelectElement).value).toBe("14");
     expect(screen.getByRole("button", { name: "Laser" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("exibe a confirmação e o botão de WhatsApp no lugar do envio após reservar", async () => {
+    const user = userEvent.setup();
+    const onAnotherBooking = vi.fn();
+    render(<BookingConfirmation reservation={{
+      customerName: "Cliente de teste",
+      serviceName: "Massagem com ventosa",
+      slotDate: "2026-08-20",
+      startTime: "10:00",
+      endTime: "11:00",
+    }} onAnotherBooking={onAnotherBooking} />);
+
+    expect(screen.getByRole("status").textContent).toContain("Agendamento confirmado, Cliente de teste.");
+    const whatsappLink = screen.getByRole("link", { name: /Abrir WhatsApp com mensagem pronta/i });
+    expect(whatsappLink.getAttribute("href")).toContain("wa.me/5511992698360");
+    await user.click(screen.getByRole("button", { name: "Fazer outro agendamento" }));
+    expect(onAnotherBooking).toHaveBeenCalledTimes(1);
   });
 });
