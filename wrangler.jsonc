@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "agenda",
+  "name": "agenda", // O endereço público é agenda.studiohenriques.workers.dev.
   "main": "cloudflare/worker.ts",
   "compatibility_date": "2026-08-19",
   "compatibility_flags": ["nodejs_compat"],
